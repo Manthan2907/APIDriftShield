@@ -123,25 +123,37 @@ class MigrationPathRequest(BaseModel):
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
+@app.get("/", summary="Root Status")
 @app.get("/health", summary="Health Check")
 @app.get("/api/health", summary="API Health Check")
 async def health():
     """
-    Health check endpoint returning service status, timestamp, and pipeline version.
+    Health check and root service discovery endpoint.
     """
-    logger.info("Health check requested")
+    logger.info("Service status requested")
     return {
         "status": "healthy",
-        "timestamp": datetime.now().isoformat(),
         "service": "API DriftShield Agent Backend",
         "version": "1.0.0",
+        "timestamp": datetime.now().isoformat(),
+        "motto": "DriftShield turns API changes into verified compatibility decisions—using deterministic analysis, executable tests, downstream impact tracing, automated code remediation, and honest abstention when the evidence is incomplete.",
+        "endpoints": {
+            "health": "/api/health",
+            "analyze_drift": "/api/analyze-drift",
+            "generate_migration_path": "/api/generate-migration-path",
+            "analyze_github_repo": "/api/analyze-github-repo",
+            "benchmark": "/api/benchmark",
+            "swagger_docs": "/docs",
+            "redoc": "/redoc"
+        },
         "pipeline_stages": [
             "1. Deterministic Structural Diff",
             "2. Policy-Aware Compatibility Classifier",
             "3. Targeted Executable Test Generator",
             "4. Runtime Verification Sandbox",
             "5. Downstream Impact Tracer",
-            "6. Evidence Gate & Honest Abstention"
+            "6. Evidence Gate & Honest Abstention",
+            "7. Automated Code Remediation & Migration Path"
         ]
     }
 
