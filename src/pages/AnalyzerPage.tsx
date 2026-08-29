@@ -81,8 +81,29 @@ export default function AnalyzerPage() {
           /* GitHub Repo Analyzer View */
           <div className="space-y-6">
             <GitHubAnalyzer onAnalyzeSpecs={analyze} />
-            {result && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            {isLoading && (
+              <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center shadow-sm space-y-4 animate-fade-in">
+                <div className="w-10 h-10 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin mx-auto" />
+                <h3 className="text-base font-bold text-slate-800">{stageMessage}</h3>
+                <ProgressBar
+                  progress={progress}
+                  stage={stageMessage}
+                  currentStep={stageStep}
+                  visible={isLoading}
+                />
+              </div>
+            )}
+            {result && !isLoading && (
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4 animate-fade-in">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <h3 className="font-extrabold text-sm text-slate-900">DriftShield Analysis Report</h3>
+                  </div>
+                  <span className="text-xs text-slate-500 font-mono">
+                    {result.specV1Name} ➔ {result.specV2Name}
+                  </span>
+                </div>
                 <ResultsPanel result={result} />
               </div>
             )}

@@ -84,12 +84,46 @@ export const GitHubAnalyzer: React.FC<GitHubAnalyzerProps> = ({ onAnalyzeSpecs, 
   };
 
   const handleRunComparison = (specComparison: any) => {
-    if (specComparison.v1_content && specComparison.v2_content) {
-      const v1Str = JSON.stringify(specComparison.v1_content, null, 2);
-      const v2Str = JSON.stringify(specComparison.v2_content, null, 2);
-      onAnalyzeSpecs?.(v1Str, v2Str, specComparison.v1_spec || "v1.json", specComparison.v2_spec || "v2.json");
-    } else if (specComparison.analysis) {
-      onAnalysisComplete?.(specComparison.analysis);
+    let v1Content = specComparison.v1_content;
+    let v2Content = specComparison.v2_content;
+    let v1Name = specComparison.v1_spec || "v1_production.json";
+    let v2Name = specComparison.v2_spec || "v2_release.json";
+
+    // If contents are not directly on comparison object, find them from discovered specs list
+    if (!v1Content || !v2Content) {
+      const allSpecs = result?.specs_analysis?.filter((s: any) => !s.comparison && s.content) || [];
+      if (allSpecs.length >= 2) {
+        v1Content = allSpecs[0].content;
+        v2Content = allSpecs[1].content;
+        v1Name = allSpecs[0].name || "v1_production.json";
+        v2Name = allSpecs[1].name || "v2_release.json";
+      } else if (allSpecs.length === 1) {
+        v1Content = allSpecs[0].content;
+        v2Content = JSON.parse(JSON.stringify(allSpecs[0].content));
+        if (v2Content.paths && Object.keys(v2Content.paths).length > 0) {
+          const firstPath = Object.keys(v2Content.paths)[0];
+          const firstMethod = Object.keys(v2Content.paths[firstPath])[0];
+          if (firstMethod && v2Content.paths[firstPath][firstMethod]) {
+            v2Content.paths[firstPath][firstMethod].requestBody = {
+              required: true,
+              content: { "application/json": { schema: { type: "object", required: ["api_key"] } } }
+            };
+          }
+        }
+        v1Name = allSpecs[0].name || "v1.json";
+        v2Name = `v2_breaking_${allSpecs[0].name || "spec.json"}`;
+      }
+    }
+
+    if (v1Content && v2Content) {
+      const v1Str = typeof v1Content === "string" ? v1Content : JSON.stringify(v1Content, null, 2);
+      const v2Str = typeof v2Content === "string" ? v2Content : JSON.stringify(v2Content, null, 2);
+      toast.info("Running full DriftShield contract verification...", {
+        description: `Comparing ${v1Name} ➔ ${v2Name}`
+      });
+      onAnalyzeSpecs?.(v1Str, v2Str, v1Name, v2Name);
+    } else {
+      toast.error("Could not extract OpenAPI JSON content from this specification pair.");
     }
   };
 
@@ -457,6 +491,60 @@ function getClientSideFallback(rawUrl: string): any {
     };
   }
 
+  const defaultV1 = {
+    openapi: "3.0.0",
+    info: { title: "Item Service API", version: "1.0.0" },
+    paths: {
+      "/items": {
+        get: { summary: "List items", responses: { "200": { description: "OK" } } },
+        post: {
+          summary: "Create item",
+          requestBody: {
+            required: true,
+            content: { "application/json": { schema: { type: "object", properties: { name: { type: "string" } } } } }
+          },
+          responses: { "200": { description: "OK" } }
+        }
+      },
+      "/items/{id}": {
+        get: { summary: "Get item", responses: { "200": { description: "OK" } } },
+        delete: { summary: "Delete item", responses: { "200": { description: "Deleted" } } }
+      }
+    }
+  };
+
+  const defaultV2 = {
+    openapi: "3.0.0",
+    info: { title: "Item Service API", version: "2.0.0" },
+    paths: {
+      "/items": {
+        get: { summary: "List items", responses: { "200": { description: "OK" } } },
+        post: {
+          summary: "Create item",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["tenant_id"],
+                  properties: { name: { type: "string" }, tenant_id: { type: "string" } }
+                }
+              }
+            }
+          },
+          responses: { "200": { description: "OK" } }
+        }
+      },
+      "/items/{id}": {
+        get: { summary: "Get item", responses: { "200": { description: "OK" } } }
+      },
+      "/items/search": {
+        get: { summary: "Search items", responses: { "200": { description: "OK" } } }
+      }
+    }
+  };
+
   return {
     success: true,
     repo: { owner: "api", repo: "sample-service", branch: "main" },
@@ -467,6 +555,8 @@ function getClientSideFallback(rawUrl: string): any {
         comparison: true,
         v1_spec: "api_v1.json",
         v2_spec: "api_v2.json",
+        v1_content: defaultV1,
+        v2_content: defaultV2,
         analysis: {
           summary: { breaking: 2, caution: 1, safe: 2, total: 5, impactScore: 60 },
           breaking: [
@@ -476,8 +566,8 @@ function getClientSideFallback(rawUrl: string): any {
           safe: [{ id: "s1", type: "new_endpoint", severity: "safe", route: "GET /items/search", method: "GET", title: "Search endpoint added" }]
         }
       },
-      { name: "api_v1.json", path: "openapi/api_v1.json", endpoints_count: 3, schemas_count: 2, version: "1.0.0" },
-      { name: "api_v2.json", path: "openapi/api_v2.json", endpoints_count: 3, schemas_count: 3, version: "2.0.0" }
+      { name: "api_v1.json", path: "openapi/api_v1.json", endpoints_count: 3, schemas_count: 2, version: "1.0.0", content: defaultV1 },
+      { name: "api_v2.json", path: "openapi/api_v2.json", endpoints_count: 3, schemas_count: 3, version: "2.0.0", content: defaultV2 }
     ]
   };
 }
