@@ -2,6 +2,12 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "functions": {
+    "api/index.py": {
+      "includeFiles": "antigravity_backend/**",
+      "excludeFiles": "{antigravity_backend/benchmark/specs/**,antigravity_backend/benchmark/mutations/**,test_data/**,prompts_md/**,example_specs/**}"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
