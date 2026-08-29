@@ -75,8 +75,10 @@ def generate_single_migration(
             "breaking_change_type": "Endpoint Removed",
             "change_description": f"{method} {path} no longer exists in v2 specification",
             "severity": "Critical",
-            "old_code": f"client.{old_fn}(id)",
-            "new_code": f"client.{new_fn}(id)  # Replaces deleted {path}",
+            "old_code": f"// Legacy v1 Client Call\nconst res = await api.{old_fn.lower()}(id);",
+            "new_code": f"// Migrated v2 Client Call\nconst res = await api.{new_fn.lower()}(id);  // Replaces deleted {path}",
+            "legacy_code_snippet": f"// Legacy v1 Client Call\nconst res = await api.{old_fn.lower()}(id);",
+            "migrated_code_snippet": f"// Migrated v2 Client Call\nconst res = await api.{new_fn.lower()}(id);  // Replaces deleted {path}",
             "effort": "Low",
             "time_minutes": 10,
             "steps": [
@@ -85,11 +87,18 @@ def generate_single_migration(
                 f"3. Run integration tests in staging sandbox",
                 f"4. Deploy updated SDK / microservice clients"
             ],
+            "remediation_steps": [
+                f"Search codebase for all invocations of `client.{old_fn}()`",
+                f"Replace target endpoint calls with `client.{new_fn}()`",
+                f"Run integration tests in staging sandbox",
+                f"Deploy updated SDK / microservice clients"
+            ],
             "regex_find_replace": {
                 "find": f"{old_fn}\\(",
                 "replace": f"{new_fn}("
             },
-            "bash_command": f'grep -r "{old_fn}" ./src --include="*.py" --include="*.ts" | wc -l',
+            "bash_command": f'sed -i "s|{path}|{similar_endpoint.get("path", "/v2/resource")}|g" src/**/*.ts',
+            "sed_command": f'sed -i "s|{path}|{similar_endpoint.get("path", "/v2/resource")}|g" src/**/*.ts',
             "similar_endpoint": similar_endpoint
         }
 
@@ -221,13 +230,13 @@ def generate_single_migration(
 
     # DEFAULT FALLBACK
     else:
-        return {
+        res = {
             "change_id": cid,
             "breaking_change_type": change.get("type", "Contract Change").replace("_", " ").title(),
             "change_description": change.get("details") or f"Breaking contract change on route {path}",
             "severity": "Medium",
-            "old_code": f"client.call_legacy_{path.strip('/').replace('/', '_')}()",
-            "new_code": f"client.call_v2_{path.strip('/').replace('/', '_')}()",
+            "old_code": f"// Legacy v1 Client Call\nconst res = await api.{method.lower()}('{path}');",
+            "new_code": f"// Migrated v2 Client Call\nconst res = await api.{method.lower()}('/v2/resource');",
             "effort": "Medium",
             "time_minutes": 15,
             "steps": [
@@ -236,6 +245,14 @@ def generate_single_migration(
                 f"3. Run automated end-to-end integration tests"
             ]
         }
+
+    # Ensure all frontend fields are 100% populated
+    res["legacy_code_snippet"] = res.get("legacy_code_snippet") or res.get("old_code") or f"// Legacy call: {method} {path}"
+    res["migrated_code_snippet"] = res.get("migrated_code_snippet") or res.get("new_code") or f"// Migrated call: {method} /v2/resource"
+    res["remediation_steps"] = res.get("remediation_steps") or res.get("steps") or ["Update client payload.", "Run test suite."]
+    res["sed_command"] = res.get("sed_command") or res.get("bash_command") or f"grep -rn '{path}' src/"
+
+    return res
 
 
 def find_similar_endpoint(old_path: str, method: str, v2_spec: Dict[str, Any]) -> Dict[str, Any]:

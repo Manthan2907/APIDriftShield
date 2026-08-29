@@ -17,7 +17,8 @@ import {
   Wrench,
   CheckCircle2,
   RefreshCw,
-  Info
+  Info,
+  Server
 } from "lucide-react";
 import { ApiChange } from "@/types";
 import { toast } from "sonner";
@@ -43,6 +44,10 @@ export const AiRemediationModal: React.FC<AiRemediationModalProps> = ({
 }) => {
   const [provider, setProvider] = useState<Provider>("groq");
   const [apiKey, setApiKey] = useState<string>("");
+  const [serverStatus, setServerStatus] = useState<{ groq_configured: boolean; gemini_configured: boolean }>({
+    groq_configured: false,
+    gemini_configured: false
+  });
   const [targetTool, setTargetTool] = useState<TargetTool>("cursor");
   const [loading, setLoading] = useState<boolean>(false);
   const [copiedPrompt, setCopiedPrompt] = useState<boolean>(false);
@@ -51,14 +56,30 @@ export const AiRemediationModal: React.FC<AiRemediationModalProps> = ({
   const [gatewayCode, setGatewayCode] = useState<string>("");
   const [sdkCode, setSdkCode] = useState<string>("");
   const [aiSummary, setAiSummary] = useState<string>("");
+  const [activeModelName, setActiveModelName] = useState<string>("Smart Synthesizer");
 
-  // Load saved API key from localStorage
+  // Check server-side AI key status on mount
   useEffect(() => {
-    const savedGroq = localStorage.getItem("driftshield_groq_api_key");
-    const savedGemini = localStorage.getItem("driftshield_gemini_api_key");
-    if (provider === "groq" && savedGroq) setApiKey(savedGroq);
-    if (provider === "gemini" && savedGemini) setApiKey(savedGemini);
-  }, [provider]);
+    fetchServerAiStatus();
+  }, []);
+
+  const fetchServerAiStatus = async () => {
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || "";
+      const res = await fetch(`${backendUrl}/api/ai-status`);
+      if (res.ok) {
+        const data = await res.json();
+        setServerStatus({
+          groq_configured: !!data.groq_configured,
+          gemini_configured: !!data.gemini_configured
+        });
+        if (data.groq_configured) setProvider("groq");
+        else if (data.gemini_configured) setProvider("gemini");
+      }
+    } catch {
+      // Offline fallback
+    }
+  };
 
   // Group breaking changes by root-cause patterns
   const clusters = React.useMemo(() => {
@@ -93,69 +114,51 @@ export const AiRemediationModal: React.FC<AiRemediationModalProps> = ({
 
   const handleGenerateStrategy = async (showToast: boolean = true) => {
     setLoading(true);
-    if (apiKey.trim()) {
-      if (provider === "groq") localStorage.setItem("driftshield_groq_api_key", apiKey.trim());
-      if (provider === "gemini") localStorage.setItem("driftshield_gemini_api_key", apiKey.trim());
-    }
-
     try {
-      if (provider === "groq" && apiKey.trim()) {
-        await callGroqApi(apiKey.trim());
-      } else if (provider === "gemini" && apiKey.trim()) {
-        await callGeminiApi(apiKey.trim());
-      } else {
-        generateOfflineSynthesizer();
-      }
-      if (showToast) {
-        toast.success("✨ Strategic AI Remediation Prompt Generated!");
-      }
-    } catch (err: any) {
-      console.warn("AI generation failed, falling back to smart offline synthesizer:", err);
-      generateOfflineSynthesizer();
-      toast.info("Generated via DriftShield Smart Synthesizer (Offline Engine)", {
-        description: err.message || "API rate limit or invalid key"
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || "";
+      const response = await fetch(`${backendUrl}/api/ai-remediation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          breaking_changes: breakingChanges.map((c) => ({
+            id: c.id,
+            type: c.type,
+            route: c.route || c.path,
+            method: c.method || "ALL",
+            title: c.title,
+            description: c.description,
+            evidence: c.evidence,
+            recommendation: c.recommendation
+          })),
+          v1_name: v1SpecName,
+          v2_name: v2SpecName,
+          target_tool: targetTool,
+          provider: provider,
+          custom_api_key: apiKey.trim() || undefined
+        })
       });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.prompt) {
+          setGeneratedPrompt(data.prompt);
+          setActiveModelName(data.model || (data.provider_used === "groq" ? "Groq Llama 3.3 70B" : "Gemini 1.5 Flash"));
+          generateCompanionCode();
+          if (showToast) toast.success(`✨ Strategic AI Prompt Generated via ${data.provider_used.toUpperCase()}`);
+          return;
+        }
+      }
+      throw new Error("Server AI fallback triggered");
+    } catch {
+      generateOfflineSynthesizer();
+      if (showToast) toast.info("Generated using DriftShield Deterministic Synthesizer");
     } finally {
       setLoading(false);
     }
   };
 
-  const generateOfflineSynthesizer = () => {
-    // 1. Cursor / Claude Code Refactoring Prompt
-    const sampleRemoved = clusters.removed.slice(0, 10).map((c) => `- ${c.route} (${c.method})`).join("\n");
-    const sampleRequired = clusters.required.slice(0, 10).map((c) => `- ${c.route}: Add required field "${c.title}"`).join("\n");
-
-    const promptText = `
-# DriftShield API Migration Directive for ${targetTool.toUpperCase()}
-Target Release: ${v1SpecName} ➔ ${v2SpecName}
-Total Breaking Mutations: ${clusters.total} breaking contract changes.
-
-## Executive Context
-Our upstream backend API has updated to OpenAPI v2 with ${clusters.total} breaking modifications. 
-Please scan our client repository, identify all API calls, schemas, and SDK invocations, and refactor them according to the following strict rules:
-
-### 1. Removed Endpoints (${clusters.removed.length} Total Routes)
-The following endpoints were deprecated/removed. Replace all invocations with their corresponding v2 resource paths:
-${sampleRemoved || "- No removed endpoints"}
-${clusters.removed.length > 10 ? `...and ${clusters.removed.length - 10} additional removed routes.` : ""}
-
-### 2. Mandatory Request Parameters (${clusters.required.length} Required Fields)
-The following endpoints now enforce mandatory request fields. Ensure all outgoing client requests supply valid values or configure default fallbacks:
-${sampleRequired || "- No required field additions"}
-${clusters.required.length > 10 ? `...and ${clusters.required.length - 10} additional mandatory fields.` : ""}
-
-### 3. Schema & Type Refactoring (${clusters.typeNarrow.length} Types)
-Update TypeScript interfaces / Python dataclasses / Pydantic models to align with strict narrowed types and updated response envelopes.
-
-### 4. Verification & Testing
-1. Search across the entire codebase for legacy endpoint string literals.
-2. Update unit tests and integration mocks to reflect the new schemas.
-3. Verify that zero runtime HTTP 400/404/422 errors are thrown.
-`.trim();
-
-    setGeneratedPrompt(promptText);
-
-    // 2. Gateway Zero-Downtime Hotfix (Cloudflare Worker / Nginx / Express)
+  const generateCompanionCode = () => {
+    // 2. Gateway Zero-Downtime Hotfix
     const gatewaySnippet = `// DriftShield 5-Minute Zero-Downtime API Gateway Hotfix
 // Deploy this proxy middleware (Cloudflare Worker / Express / Envoy) to prevent client outages:
 
@@ -165,8 +168,8 @@ export default {
     const method = request.method;
 
     // Rule 1: Route Rewrites for Deprecated Endpoints (${clusters.removed.length} routes)
-    ${clusters.removed.slice(0, 3).map(c => `if (url.pathname.includes("${c.route?.replace(/^[A-Z]+\s+/, '')}")) {
-      url.pathname = url.pathname.replace("${c.route?.replace(/^[A-Z]+\s+/, '')}", "/v2/resource");
+    ${clusters.removed.slice(0, 3).map(c => `if (url.pathname.includes("${(c.route || '/resource').replace(/^[A-Z]+\s+/, '')}")) {
+      url.pathname = url.pathname.replace("${(c.route || '/resource').replace(/^[A-Z]+\s+/, '')}", "/v2/resource");
     }`).join("\n    ")}
 
     // Rule 2: Automatic Injection for Newly Required Headers & Keys (${clusters.required.length} fields)
@@ -215,76 +218,41 @@ apiClient.interceptors.request.use((config) => {
     );
   };
 
-  const callGroqApi = async (key: string) => {
-    const promptSummary = `OpenAPI Drift Analysis: ${clusters.total} breaking changes detected (${clusters.removed.length} removed endpoints, ${clusters.required.length} added required fields, ${clusters.typeNarrow.length} type changes). Spec ${v1SpecName} -> ${v2SpecName}.`;
+  const generateOfflineSynthesizer = () => {
+    const sampleRemoved = clusters.removed.slice(0, 10).map((c) => `- ${c.route} (${c.method})`).join("\n");
+    const sampleRequired = clusters.required.slice(0, 10).map((c) => `- ${c.route}: Add required field "${c.title}"`).join("\n");
 
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${key}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: [
-          {
-            role: "system",
-            content: "You are DriftShield's Principal API Architect. Provide concise, ultra-actionable AI coding agent prompts (for Cursor/Claude) and Gateway remediation code for massive OpenAPI breaking contract diffs."
-          },
-          {
-            role: "user",
-            content: `Generate a comprehensive refactoring prompt for ${targetTool} to fix these ${clusters.total} breaking changes in one pass:\n${promptSummary}\nTop changes: ${JSON.stringify(breakingChanges.slice(0, 15).map(c => ({ route: c.route, type: c.type, title: c.title })))}`
-          }
-        ],
-        temperature: 0.2,
-        max_tokens: 1500
-      })
-    });
+    const promptText = `
+# DriftShield API Migration Directive for ${targetTool.toUpperCase()}
+Target Release: ${v1SpecName} ➔ ${v2SpecName}
+Total Breaking Mutations: ${clusters.total} breaking contract changes.
 
-    if (!res.ok) {
-      const errBody = await res.json().catch(() => ({}));
-      throw new Error(errBody.error?.message || `Groq API returned HTTP ${res.status}`);
-    }
+## Executive Context
+Our upstream backend API has updated to OpenAPI v2 with ${clusters.total} breaking modifications. 
+Please scan our client repository, identify all API calls, schemas, and SDK invocations, and refactor them according to the following strict rules:
 
-    const data = await res.json();
-    const reply = data.choices?.[0]?.message?.content || "";
-    setGeneratedPrompt(reply);
-    generateOfflineSynthesizer(); // generate gateway & sdk code
-    if (reply) setGeneratedPrompt(reply);
-  };
+### 1. Removed Endpoints (${clusters.removed.length} Total Routes)
+The following endpoints were deprecated/removed. Replace all invocations with their corresponding v2 resource paths:
+${sampleRemoved || "- No removed endpoints"}
+${clusters.removed.length > 10 ? `...and ${clusters.removed.length - 10} additional removed routes.` : ""}
 
-  const callGeminiApi = async (key: string) => {
-    const promptSummary = `OpenAPI Drift Analysis: ${clusters.total} breaking changes (${clusters.removed.length} removed endpoints, ${clusters.required.length} added required fields).`;
+### 2. Mandatory Request Parameters (${clusters.required.length} Required Fields)
+The following endpoints now enforce mandatory request fields. Ensure all outgoing client requests supply valid values or configure default fallbacks:
+${sampleRequired || "- No required field additions"}
+${clusters.required.length > 10 ? `...and ${clusters.required.length - 10} additional mandatory fields.` : ""}
 
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: `You are DriftShield Principal API Architect. Generate an actionable refactoring prompt for ${targetTool} and executive analysis for ${clusters.total} breaking changes:\n${promptSummary}\nTop sample changes: ${JSON.stringify(breakingChanges.slice(0, 15).map(c => ({ route: c.route, type: c.type, title: c.title })))}`
-                }
-              ]
-            }
-          ]
-        })
-      }
-    );
+### 3. Schema & Type Refactoring (${clusters.typeNarrow.length} Types)
+Update TypeScript interfaces / Python dataclasses / Pydantic models to align with strict narrowed types and updated response envelopes.
 
-    if (!res.ok) {
-      const errBody = await res.json().catch(() => ({}));
-      throw new Error(errBody.error?.message || `Gemini API returned HTTP ${res.status}`);
-    }
+### 4. Verification & Testing
+1. Search across the entire codebase for legacy endpoint string literals.
+2. Update unit tests and integration mocks to reflect the new schemas.
+3. Verify that zero runtime HTTP 400/404/422 errors are thrown.
+`.trim();
 
-    const data = await res.json();
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    setGeneratedPrompt(reply);
-    generateOfflineSynthesizer();
-    if (reply) setGeneratedPrompt(reply);
+    setGeneratedPrompt(promptText);
+    setActiveModelName("Deterministic Smart Synthesizer");
+    generateCompanionCode();
   };
 
   const copyToClipboard = (text: string) => {
@@ -295,6 +263,8 @@ apiClient.interceptors.request.use((config) => {
   };
 
   if (!isOpen) return null;
+
+  const isServerKeyAvailable = (provider === "groq" && serverStatus.groq_configured) || (provider === "gemini" && serverStatus.gemini_configured);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-fade-in font-sans">
@@ -315,12 +285,12 @@ apiClient.interceptors.request.use((config) => {
                 <h2 className="text-base font-extrabold text-slate-900">
                   AI Strategic Remediation &amp; Unified Fix Prompt
                 </h2>
-                <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-extrabold uppercase">
-                  {clusters.total} Breaking Incompatibilities
+                <span className="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-extrabold uppercase">
+                  {clusters.total} Breaking Fixes
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Resolve {clusters.total} breaking changes in 2 minutes instead of 160h manual editing via Cursor, Claude, or a 5-minute Gateway rule.
+                Powered by {activeModelName} — One-click directive for Cursor, Claude, or a 5-minute Gateway hotfix.
               </p>
             </div>
           </div>
@@ -333,7 +303,7 @@ apiClient.interceptors.request.use((config) => {
           </button>
         </div>
 
-        {/* AI Provider & Settings Bar */}
+        {/* AI Provider & Server Status Bar */}
         <div className="p-4 bg-indigo-50/40 border-b border-indigo-100 flex items-center justify-between flex-wrap gap-3 text-xs">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-bold text-slate-700 flex items-center gap-1">
@@ -343,24 +313,26 @@ apiClient.interceptors.request.use((config) => {
               <button
                 onClick={() => setProvider("groq")}
                 className={cn(
-                  "px-3 py-1 rounded-lg font-bold transition-all cursor-pointer",
+                  "px-3 py-1 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1",
                   provider === "groq"
                     ? "bg-indigo-600 text-white shadow-sm"
                     : "text-slate-600 hover:text-slate-900"
                 )}
               >
-                Groq (Llama 3.3 70B)
+                <span>Groq (Llama 3.3 70B)</span>
+                {serverStatus.groq_configured && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
               </button>
               <button
                 onClick={() => setProvider("gemini")}
                 className={cn(
-                  "px-3 py-1 rounded-lg font-bold transition-all cursor-pointer",
+                  "px-3 py-1 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1",
                   provider === "gemini"
                     ? "bg-indigo-600 text-white shadow-sm"
                     : "text-slate-600 hover:text-slate-900"
                 )}
               >
-                Google Gemini
+                <span>Google Gemini</span>
+                {serverStatus.gemini_configured && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
               </button>
               <button
                 onClick={() => setProvider("offline")}
@@ -371,34 +343,44 @@ apiClient.interceptors.request.use((config) => {
                     : "text-slate-600 hover:text-slate-900"
                 )}
               >
-                Offline Synthesizer
+                Smart Synthesizer
               </button>
             </div>
           </div>
 
-          {/* API Key Input (if Groq or Gemini selected) */}
-          {provider !== "offline" && (
-            <div className="flex items-center gap-2 flex-1 max-w-sm">
-              <div className="relative flex-1">
-                <Key className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder={provider === "groq" ? "Enter Groq Key (gsk_...)" : "Enter Gemini Key (AIza...)"}
-                  className="w-full pl-8 pr-3 py-1.5 bg-white border border-indigo-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-mono shadow-sm"
-                />
-              </div>
-              <button
-                onClick={() => handleGenerateStrategy(true)}
-                disabled={loading}
-                className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-sm flex items-center gap-1 cursor-pointer disabled:opacity-50"
-              >
-                {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
-                <span>Generate</span>
-              </button>
-            </div>
-          )}
+          {/* Key Status or Manual Override */}
+          <div className="flex items-center gap-2">
+            {isServerKeyAvailable ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-xs">
+                <Server className="w-3.5 h-3.5 text-emerald-600" />
+                Server Environment Connected (.env / Railway)
+              </span>
+            ) : (
+              provider !== "offline" && (
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <Key className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="password"
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)}
+                      placeholder={provider === "groq" ? "Enter GROQ_API_KEY" : "Enter GEMINI_API_KEY"}
+                      className="pl-7 pr-3 py-1.5 bg-white border border-indigo-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-mono shadow-sm w-44"
+                    />
+                  </div>
+                </div>
+              )
+            )}
+
+            <button
+              onClick={() => handleGenerateStrategy(true)}
+              disabled={loading}
+              className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
+              <span>{loading ? "Synthesizing..." : "Regenerate"}</span>
+            </button>
+          </div>
         </div>
 
         {/* Modal Content */}

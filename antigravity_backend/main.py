@@ -122,6 +122,15 @@ class MigrationPathRequest(BaseModel):
     v2_spec: Optional[Dict[str, Any]] = Field(default={}, description="Target specification")
 
 
+class AiRemediationRequest(BaseModel):
+    breaking_changes: List[Dict[str, Any]] = Field(..., description="List of detected breaking contract changes")
+    v1_name: Optional[str] = Field("v1_production.json", description="Filename or label for v1 spec")
+    v2_name: Optional[str] = Field("v2_release.json", description="Filename or label for v2 spec")
+    target_tool: Optional[str] = Field("cursor", description="Target AI coding tool (cursor, claude, copilot, etc.)")
+    custom_api_key: Optional[str] = Field(None, description="Optional user-provided API key")
+    provider: Optional[str] = Field("groq", description="AI provider (groq or gemini)")
+
+
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @app.get("/health", summary="Health Check")
@@ -583,6 +592,138 @@ async def generate_migration_path_endpoint(payload: MigrationPathRequest):
             status_code=500,
             content={"success": False, "error": str(e), "migrations": []}
         )
+
+
+@app.get("/api/ai-status", summary="Check Server AI Key Status")
+async def ai_status_endpoint():
+    """
+    Checks if GROQ_API_KEY or GEMINI_API_KEY are configured in the server environment (Railway/.env).
+    """
+    groq_configured = bool(os.environ.get("GROQ_API_KEY"))
+    gemini_configured = bool(os.environ.get("GEMINI_API_KEY"))
+    return {
+        "success": True,
+        "groq_configured": groq_configured,
+        "gemini_configured": gemini_configured,
+        "active_provider": "groq" if groq_configured else ("gemini" if gemini_configured else "offline")
+    }
+
+
+@app.post("/api/ai-remediation", summary="Execute Server-Side AI Remediation Prompt Synthesis")
+async def ai_remediation_endpoint(payload: AiRemediationRequest):
+    """
+    Executes strategic AI remediation prompt synthesis using server-configured GROQ_API_KEY or GEMINI_API_KEY.
+    """
+    breaking = payload.breaking_changes
+    target = payload.target_tool.upper()
+    groq_key = (os.environ.get("GROQ_API_KEY") or payload.custom_api_key) if payload.provider == "groq" else None
+    gemini_key = (os.environ.get("GEMINI_API_KEY") or payload.custom_api_key) if payload.provider == "gemini" else None
+
+    # Fallback to whatever server key exists if provider not strictly matched
+    if not groq_key and not gemini_key:
+        groq_key = os.environ.get("GROQ_API_KEY")
+        gemini_key = os.environ.get("GEMINI_API_KEY")
+
+    # 1. Try Server Groq Llama 3.3 70B
+    if groq_key:
+        try:
+            prompt_summary = f"OpenAPI Drift: {len(breaking)} breaking changes ({payload.v1_name} -> {payload.v2_name}). Top mutations: {json.dumps(breaking[:15])}"
+            groq_res = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {groq_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "llama-3.3-70b-versatile",
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": "You are DriftShield's Principal API Architect. Provide concise, ultra-actionable AI coding agent directives for Cursor, Claude Code, and Copilot to refactor client codebases against massive breaking contract changes."
+                        },
+                        {
+                            "role": "user",
+                            "content": f"Generate a comprehensive, single-pass refactoring prompt for {target} to fix these {len(breaking)} breaking changes:\n{prompt_summary}"
+                        }
+                    ],
+                    "temperature": 0.2,
+                    "max_tokens": 1500
+                },
+                timeout=12
+            )
+            if groq_res.status_code == 200:
+                data = groq_res.json()
+                reply = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+                if reply:
+                    return {
+                        "success": True,
+                        "provider_used": "groq",
+                        "model": "llama-3.3-70b-versatile",
+                        "server_key_used": bool(os.environ.get("GROQ_API_KEY")),
+                        "prompt": reply
+                    }
+        except Exception as e:
+            logger.warning(f"Server Groq call error: {e}")
+
+    # 2. Try Server Gemini 1.5 Flash
+    if gemini_key:
+        try:
+            gemini_res = requests.post(
+                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}",
+                headers={"Content-Type": "application/json"},
+                json={
+                    "contents": [{
+                        "parts": [{
+                            "text": f"You are DriftShield Principal API Architect. Generate an actionable refactoring prompt for {target} to fix {len(breaking)} breaking changes ({payload.v1_name} -> {payload.v2_name}):\n{json.dumps(breaking[:15])}"
+                        }]
+                    }]
+                },
+                timeout=12
+            )
+            if gemini_res.status_code == 200:
+                data = gemini_res.json()
+                reply = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+                if reply:
+                    return {
+                        "success": True,
+                        "provider_used": "gemini",
+                        "model": "gemini-1.5-flash",
+                        "server_key_used": bool(os.environ.get("GEMINI_API_KEY")),
+                        "prompt": reply
+                    }
+        except Exception as e:
+            logger.warning(f"Server Gemini call error: {e}")
+
+    # 3. Smart Offline Synthesizer
+    sample_removed = [f"- {c.get('route', c.get('path', '/resource'))} ({c.get('method', 'GET')})" for c in breaking if "removed" in c.get("type", "").lower() or "removed" in c.get("title", "").lower()]
+    sample_req = [f"- {c.get('route', '/resource')}: Supply required field '{c.get('title', 'param')}'" for c in breaking if "required" in c.get("type", "").lower() or "required" in c.get("title", "").lower()]
+    
+    offline_prompt = f"""# DriftShield API Migration Directive for {target}
+Target Release: {payload.v1_name} ➔ {payload.v2_name}
+Total Breaking Changes: {len(breaking)}
+
+## Executive Refactoring Instructions
+Our backend API has migrated to v2 with {len(breaking)} breaking changes. Refactor all client services, schemas, and SDK calls according to the following directives:
+
+### 1. Deprecated / Removed Routes ({len(sample_removed)} Endpoints)
+Replace all client invocations targeting deprecated endpoints:
+{chr(10).join(sample_removed[:12]) or '- No route removals detected.'}
+
+### 2. Mandatory Request Schemas ({len(sample_req)} Required Fields)
+Ensure all client constructors supply required fields or default fallbacks:
+{chr(10).join(sample_req[:12]) or '- No required field additions detected.'}
+
+### 3. Verification
+1. Search codebase for deprecated endpoint string literals.
+2. Update unit tests and integration mocks.
+3. Verify zero runtime HTTP 400/404/422 errors.
+"""
+    return {
+        "success": True,
+        "provider_used": "smart_offline_synthesizer",
+        "server_key_used": False,
+        "prompt": offline_prompt.strip()
+    }
 
 
 # ── Static SPA Frontend Mount (for Unified Single-Container Deployment) ───────
