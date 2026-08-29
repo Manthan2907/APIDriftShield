@@ -21,7 +21,8 @@ if hasattr(sys.stderr, "reconfigure"):
 sys.path.insert(0, os.path.dirname(__file__))
 
 from fastapi import FastAPI, Request, Response, HTTPException, Query, status
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel, Field
@@ -583,6 +584,37 @@ async def generate_migration_path_endpoint(payload: MigrationPathRequest):
             status_code=500,
             content={"success": False, "error": str(e), "migrations": []}
         )
+
+
+# ── Static SPA Frontend Mount (for Unified Single-Container Deployment) ───────
+
+dist_candidates = [
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "dist")),
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "dist")),
+    os.path.abspath("dist"),
+]
+
+dist_dir = next((d for d in dist_candidates if os.path.exists(d) and os.path.isdir(d)), None)
+
+if dist_dir:
+    logger.info(f"Mounting unified React Frontend SPA from: {dist_dir}")
+    assets_dir = os.path.join(dist_dir, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_spa(full_path: str):
+        if full_path.startswith("api/") or full_path in ("docs", "redoc", "openapi.json"):
+            raise HTTPException(status_code=404, detail="Not Found")
+        
+        target = os.path.join(dist_dir, full_path)
+        if os.path.exists(target) and os.path.isfile(target):
+            return FileResponse(target)
+        
+        index_file = os.path.join(dist_dir, "index.html")
+        if os.path.exists(index_file):
+            return FileResponse(index_file)
+        raise HTTPException(status_code=404, detail="index.html not found")
 
 
 if __name__ == "__main__":
