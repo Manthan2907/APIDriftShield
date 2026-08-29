@@ -1,13 +1,14 @@
 import { Link, useLocation } from "react-router-dom";
-import { History, BookOpen, Zap, Menu, X } from "lucide-react";
+import { History, BookOpen, Zap, Menu, X, Workflow, Github, ArrowRight } from "lucide-react";
 import { useState } from "react";
 import shieldLogo from "@/assets/shield-logo.png";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { label: "Analyzer", href: "/analyze", icon: Zap },
+  { label: "API Analyzer", href: "/analyze", icon: Zap },
+  { label: "Deep Flowchart", href: "/flowchart", icon: Workflow },
   { label: "History", href: "/history", icon: History },
-  { label: "Docs", href: "/docs", icon: BookOpen },
+  { label: "Docs & RFC", href: "/docs", icon: BookOpen },
 ];
 
 export default function Navbar() {
@@ -15,59 +16,77 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-200">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-15">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 group">
-            <img src={shieldLogo} alt="DriftShield" className="w-7 h-7 rounded object-cover" />
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-sm font-bold text-slate-900 tracking-tight">API DriftShield</span>
-              <span className="hidden sm:inline text-xs text-slate-400 font-normal">v2.0</span>
+            <div className="relative">
+              <img
+                src={shieldLogo}
+                alt="DriftShield"
+                className="w-7 h-7 rounded-lg object-cover ring-1 ring-indigo-500/20 group-hover:ring-indigo-500 transition-all shadow-sm"
+              />
+              <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
+              <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full" />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-extrabold text-slate-900 tracking-tight">
+                API DriftShield
+              </span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200/80 font-bold">
+                0.965 F1
+              </span>
             </div>
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-1">
-            {NAV.map(({ label, href }) => (
-              <Link
-                key={href}
-                to={href}
-                className={cn(
-                  "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
-                  pathname === href || pathname.startsWith(href)
-                    ? "bg-indigo-50 text-indigo-700"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                )}
-              >
-                {label}
-              </Link>
-            ))}
+          <nav className="hidden md:flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl border border-slate-200/80 shadow-inner">
+            {NAV.map(({ label, href, icon: Icon }) => {
+              const isActive = pathname === href || (href !== "/" && pathname.startsWith(href));
+              return (
+                <Link
+                  key={href}
+                  to={href}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                    isActive
+                      ? "bg-white text-indigo-700 shadow-sm font-bold border border-slate-200"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
+                  )}
+                >
+                  <Icon className={cn("w-3.5 h-3.5", isActive ? "text-indigo-600" : "text-slate-500")} />
+                  <span>{label}</span>
+                </Link>
+              );
+            })}
           </nav>
 
-          {/* CTA */}
+          {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-3">
             <a
-              href="https://github.com"
+              href="https://github.com/APIDriftShield"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-slate-500 hover:text-slate-900 transition-colors flex items-center gap-1.5"
+              className="text-xs text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-xl hover:bg-slate-100 border border-slate-200"
             >
-              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" /></svg>
-              GitHub
+              <Github className="w-3.5 h-3.5 text-slate-700" />
+              <span>GitHub</span>
             </a>
+
             <Link
               to="/analyze"
-              className="px-3.5 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-md hover:bg-indigo-700 transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
             >
-              Try it free
+              <Zap className="w-3.5 h-3.5 fill-current" />
+              <span>Analyze API</span>
             </Link>
           </div>
 
           {/* Mobile toggle */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 rounded-md text-slate-600 hover:bg-slate-100"
+            className="md:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200"
           >
             {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>
@@ -76,28 +95,31 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-slate-200 bg-white py-2">
+        <div className="md:hidden border-t border-slate-200 bg-white p-4 space-y-2 shadow-lg">
           {NAV.map(({ label, href, icon: Icon }) => (
             <Link
               key={href}
               to={href}
               onClick={() => setMobileOpen(false)}
               className={cn(
-                "flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium transition-colors",
-                pathname === href ? "text-indigo-700 bg-indigo-50" : "text-slate-700 hover:bg-slate-50"
+                "flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-bold transition-colors",
+                pathname === href
+                  ? "text-indigo-700 bg-indigo-50 border border-indigo-100"
+                  : "text-slate-700 hover:bg-slate-50"
               )}
             >
-              <Icon className="w-4 h-4" />
-              {label}
+              <Icon className="w-4 h-4 text-indigo-600" />
+              <span>{label}</span>
             </Link>
           ))}
-          <div className="mx-4 mt-2 pt-2 border-t border-slate-100">
+          <div className="pt-2 border-t border-slate-100">
             <Link
               to="/analyze"
               onClick={() => setMobileOpen(false)}
-              className="block w-full text-center px-3 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-md"
+              className="flex items-center justify-center gap-2 w-full py-2.5 bg-indigo-600 text-white text-xs font-bold rounded-xl shadow-md"
             >
-              Open Analyzer
+              <Zap className="w-4 h-4 fill-current" />
+              <span>Launch API Analyzer</span>
             </Link>
           </div>
         </div>

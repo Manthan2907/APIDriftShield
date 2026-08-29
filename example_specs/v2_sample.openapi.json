@@ -1,0 +1,115 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "E-Commerce Gateway API",
+    "version": "2.0.0",
+    "description": "Production e-commerce API v2 with strict authentication and updated models."
+  },
+  "servers": [
+    { "url": "https://api.store.example.com/v2" }
+  ],
+  "security": [
+    { "OAuth2": ["payments:write", "customers:read"] }
+  ],
+  "paths": {
+    "/v1/customers": {
+      "get": {
+        "summary": "List customers",
+        "parameters": [
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "default": 20 } },
+          { "name": "starting_after", "in": "query", "required": false, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "A list of customer objects." }
+        }
+      },
+      "post": {
+        "summary": "Create customer",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CustomerInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Customer successfully created." }
+        }
+      }
+    },
+    "/v1/customers/{id}": {
+      "get": {
+        "summary": "Get customer by ID",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Customer details." }
+        }
+      }
+    },
+    "/v1/payments/charge": {
+      "post": {
+        "summary": "Create payment charge",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ChargeRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Charge completed successfully." },
+          "202": { "description": "Asynchronously processing charge." }
+        }
+      }
+    },
+    "/v2/refunds": {
+      "post": {
+        "summary": "Initiate refund",
+        "responses": {
+          "201": { "description": "Refund queued." }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "OAuth2": {
+        "type": "oauth2",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://auth.store.example.com/oauth/token",
+            "scopes": {
+              "payments:write": "Create charges",
+              "customers:read": "Read customers"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "CustomerInput": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "email": { "type": "string" },
+          "phone": { "type": "string" },
+          "organization_id": { "type": "string" }
+        },
+        "required": ["name", "email", "organization_id"]
+      },
+      "ChargeRequest": {
+        "type": "object",
+        "properties": {
+          "amount_cents": { "type": "string" },
+          "currency": { "type": "string", "enum": ["USD", "EUR", "GBP", "CAD"] },
+          "source_id": { "type": "string" }
+        },
+        "required": ["amount_cents", "source_id"]
+      }
+    }
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "E-Commerce Gateway API",
+    "version": "1.4.0",
+    "description": "Production e-commerce API supporting payments, orders, and customer management."
+  },
+  "servers": [
+    { "url": "https://api.store.example.com/v1" }
+  ],
+  "security": [
+    { "ApiKeyAuth": [] }
+  ],
+  "paths": {
+    "/v1/customers": {
+      "get": {
+        "summary": "List customers",
+        "parameters": [
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "default": 20 } }
+        ],
+        "responses": {
+          "200": { "description": "A list of customer objects." }
+        }
+      },
+      "post": {
+        "summary": "Create customer",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CustomerInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Customer successfully created." }
+        }
+      }
+    },
+    "/v1/customers/{id}": {
+      "get": {
+        "summary": "Get customer by ID",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Customer details." }
+        }
+      },
+      "delete": {
+        "summary": "Delete customer by ID",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "204": { "description": "Customer purged." }
+        }
+      }
+    },
+    "/v1/payments/charge": {
+      "post": {
+        "summary": "Create payment charge",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ChargeRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Charge completed successfully." }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      }
+    },
+    "schemas": {
+      "CustomerInput": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "email": { "type": "string" },
+          "phone": { "type": "string" }
+        },
+        "required": ["name", "email"]
+      },
+      "ChargeRequest": {
+        "type": "object",
+        "properties": {
+          "amount_cents": { "type": "integer" },
+          "currency": { "type": "string", "enum": ["USD", "EUR", "GBP", "CAD", "LEGACY_CREDIT"] },
+          "source_id": { "type": "string" }
+        },
+        "required": ["amount_cents", "source_id"]
+      }
+    }
+  }
+}

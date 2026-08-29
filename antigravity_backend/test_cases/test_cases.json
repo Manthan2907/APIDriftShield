@@ -1,0 +1,504 @@
+{
+  "test_cases": [
+    {
+      "case_id": "TC_01_BREAKING_ENDPOINT_REMOVED",
+      "name": "Removed DELETE /users/{id} Endpoint",
+      "ground_truth_severity": "breaking",
+      "category": "endpoint_removal",
+      "v1_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "User API", "version": "1.0.0" },
+        "paths": {
+          "/users/{id}": {
+            "delete": {
+              "summary": "Delete user by ID",
+              "responses": { "204": { "description": "User deleted" } }
+            }
+          }
+        }
+      },
+      "v2_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "User API", "version": "2.0.0" },
+        "paths": {}
+      },
+      "expected_change_count": 1,
+      "expected_breaking_count": 1
+    },
+    {
+      "case_id": "TC_02_BREAKING_REQUIRED_FIELD_ADDED",
+      "name": "Added Mandatory 'organization_id' Field",
+      "ground_truth_severity": "breaking",
+      "category": "schema_required_addition",
+      "v1_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Account API", "version": "1.0.0" },
+        "components": {
+          "schemas": {
+            "CreateAccountRequest": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "email": { "type": "string" }
+              },
+              "required": ["name"]
+            }
+          }
+        }
+      },
+      "v2_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Account API", "version": "2.0.0" },
+        "components": {
+          "schemas": {
+            "CreateAccountRequest": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "email": { "type": "string" },
+                "organization_id": { "type": "string" }
+              },
+              "required": ["name", "organization_id"]
+            }
+          }
+        }
+      },
+      "expected_change_count": 2,
+      "expected_breaking_count": 1
+    },
+    {
+      "case_id": "TC_03_BREAKING_TYPE_CHANGED",
+      "name": "Field Type Narrowing from integer to string",
+      "ground_truth_severity": "breaking",
+      "category": "type_mutation",
+      "v1_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Order API", "version": "1.0.0" },
+        "components": {
+          "schemas": {
+            "Order": {
+              "type": "object",
+              "properties": {
+                "order_id": { "type": "integer" }
+              }
+            }
+          }
+        }
+      },
+      "v2_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Order API", "version": "2.0.0" },
+        "components": {
+          "schemas": {
+            "Order": {
+              "type": "object",
+              "properties": {
+                "order_id": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "expected_change_count": 1,
+      "expected_breaking_count": 1
+    },
+    {
+      "case_id": "TC_04_BREAKING_AUTH_CHANGED",
+      "name": "Global Security Switched to OAuth2",
+      "ground_truth_severity": "breaking",
+      "category": "security_mutation",
+      "v1_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Secure API", "version": "1.0.0" },
+        "security": [{ "api_key": [] }],
+        "paths": {}
+      },
+      "v2_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Secure API", "version": "2.0.0" },
+        "security": [{ "oauth2_bearer": ["write:orders"] }],
+        "paths": {}
+      },
+      "expected_change_count": 1,
+      "expected_breaking_count": 1
+    },
+    {
+      "case_id": "TC_05_BREAKING_PARAM_MADE_REQUIRED",
+      "name": "Query Parameter 'tenant_id' Made Mandatory",
+      "ground_truth_severity": "breaking",
+      "category": "parameter_mutation",
+      "v1_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Query API", "version": "1.0.0" },
+        "paths": {
+          "/items": {
+            "get": {
+              "parameters": [
+                { "name": "tenant_id", "in": "query", "required": false, "schema": { "type": "string" } }
+              ],
+              "responses": { "200": { "description": "OK" } }
+            }
+          }
+        }
+      },
+      "v2_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Query API", "version": "2.0.0" },
+        "paths": {
+          "/items": {
+            "get": {
+              "parameters": [
+                { "name": "tenant_id", "in": "query", "required": true, "schema": { "type": "string" } }
+              ],
+              "responses": { "200": { "description": "OK" } }
+            }
+          }
+        }
+      },
+      "expected_change_count": 1,
+      "expected_breaking_count": 1
+    },
+    {
+      "case_id": "TC_06_SAFE_ENDPOINT_ADDED",
+      "name": "New Endpoint POST /analytics/events Added",
+      "ground_truth_severity": "safe",
+      "category": "endpoint_addition",
+      "v1_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Analytics API", "version": "1.0.0" },
+        "paths": {
+          "/analytics/summary": { "get": { "responses": { "200": { "description": "Summary" } } } }
+        }
+      },
+      "v2_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Analytics API", "version": "2.0.0" },
+        "paths": {
+          "/analytics/summary": { "get": { "responses": { "200": { "description": "Summary" } } } },
+          "/analytics/events": { "post": { "responses": { "201": { "description": "Event logged" } } } }
+        }
+      },
+      "expected_change_count": 1,
+      "expected_breaking_count": 0
+    },
+    {
+      "case_id": "TC_07_SAFE_OPTIONAL_FIELD_ADDED",
+      "name": "Optional 'middle_name' Field Added",
+      "ground_truth_severity": "safe",
+      "category": "schema_optional_addition",
+      "v1_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Profile API", "version": "1.0.0" },
+        "components": {
+          "schemas": {
+            "Profile": {
+              "type": "object",
+              "properties": { "first_name": { "type": "string" } },
+              "required": ["first_name"]
+            }
+          }
+        }
+      },
+      "v2_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Profile API", "version": "2.0.0" },
+        "components": {
+          "schemas": {
+            "Profile": {
+              "type": "object",
+              "properties": {
+                "first_name": { "type": "string" },
+                "middle_name": { "type": "string" }
+              },
+              "required": ["first_name"]
+            }
+          }
+        }
+      },
+      "expected_change_count": 1,
+      "expected_breaking_count": 0
+    },
+    {
+      "case_id": "TC_08_SAFE_OPTIONAL_PARAM_ADDED",
+      "name": "Optional 'cursor' Pagination Param Added",
+      "ground_truth_severity": "safe",
+      "category": "parameter_addition",
+      "v1_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Pagination API", "version": "1.0.0" },
+        "paths": {
+          "/records": {
+            "get": {
+              "parameters": [
+                { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer" } }
+              ],
+              "responses": { "200": { "description": "List" } }
+            }
+          }
+        }
+      },
+      "v2_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Pagination API", "version": "2.0.0" },
+        "paths": {
+          "/records": {
+            "get": {
+              "parameters": [
+                { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer" } },
+                { "name": "cursor", "in": "query", "required": false, "schema": { "type": "string" } }
+              ],
+              "responses": { "200": { "description": "List" } }
+            }
+          }
+        }
+      },
+      "expected_change_count": 1,
+      "expected_breaking_count": 0
+    },
+    {
+      "case_id": "TC_09_SAFE_NEW_RESPONSE_FIELD",
+      "name": "New HTTP 202 Accepted Response Code Added",
+      "ground_truth_severity": "safe",
+      "category": "response_addition",
+      "v1_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Batch API", "version": "1.0.0" },
+        "paths": {
+          "/jobs": {
+            "post": {
+              "responses": { "200": { "description": "Sync done" } }
+            }
+          }
+        }
+      },
+      "v2_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Batch API", "version": "2.0.0" },
+        "paths": {
+          "/jobs": {
+            "post": {
+              "responses": {
+                "200": { "description": "Sync done" },
+                "202": { "description": "Async accepted" }
+              }
+            }
+          }
+        }
+      },
+      "expected_change_count": 1,
+      "expected_breaking_count": 0
+    },
+    {
+      "case_id": "TC_10_SAFE_MODEL_ADDED",
+      "name": "New Schema 'TelemetryEvent' Added",
+      "ground_truth_severity": "safe",
+      "category": "model_addition",
+      "v1_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Event API", "version": "1.0.0" },
+        "components": { "schemas": {} }
+      },
+      "v2_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Event API", "version": "2.0.0" },
+        "components": {
+          "schemas": {
+            "TelemetryEvent": {
+              "type": "object",
+              "properties": { "timestamp": { "type": "string" } }
+            }
+          }
+        }
+      },
+      "expected_change_count": 1,
+      "expected_breaking_count": 0
+    },
+    {
+      "case_id": "TC_11_COMPOUND_MUTATION",
+      "name": "Multi-Path Endpoint Deprecation + Required Field",
+      "ground_truth_severity": "breaking",
+      "category": "compound_drift",
+      "v1_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Store API", "version": "1.0.0" },
+        "paths": {
+          "/v1/legacy-checkout": { "post": { "responses": { "200": { "description": "Done" } } } },
+          "/v1/products": { "get": { "responses": { "200": { "description": "List" } } } }
+        },
+        "components": {
+          "schemas": {
+            "Product": {
+              "type": "object",
+              "properties": { "title": { "type": "string" } },
+              "required": []
+            }
+          }
+        }
+      },
+      "v2_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Store API", "version": "2.0.0" },
+        "paths": {
+          "/v1/products": { "get": { "responses": { "200": { "description": "List" } } } },
+          "/v2/modern-checkout": { "post": { "responses": { "200": { "description": "Done" } } } }
+        },
+        "components": {
+          "schemas": {
+            "Product": {
+              "type": "object",
+              "properties": { "title": { "type": "string" } },
+              "required": ["title"]
+            }
+          }
+        }
+      },
+      "expected_change_count": 3,
+      "expected_breaking_count": 2
+    },
+    {
+      "case_id": "TC_12_COMPOUND_ENUM_NARROWING",
+      "name": "Enum Variants Narrowed in PaymentStatus",
+      "ground_truth_severity": "breaking",
+      "category": "enum_narrowing",
+      "v1_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Billing API", "version": "1.0.0" },
+        "components": {
+          "schemas": {
+            "Payment": {
+              "type": "object",
+              "properties": {
+                "status": { "type": "string", "enum": ["pending", "authorized", "captured", "refunded", "legacy_void"] }
+              }
+            }
+          }
+        }
+      },
+      "v2_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Billing API", "version": "2.0.0" },
+        "components": {
+          "schemas": {
+            "Payment": {
+              "type": "object",
+              "properties": {
+                "status": { "type": "string", "enum": ["pending", "authorized", "captured", "refunded"] }
+              }
+            }
+          }
+        }
+      },
+      "expected_change_count": 1,
+      "expected_breaking_count": 1
+    },
+    {
+      "case_id": "TC_13_COMPOUND_RESPONSE_STATUS_REMOVED",
+      "name": "Response Status 201 Created Removed from POST /items",
+      "ground_truth_severity": "caution",
+      "category": "response_removal",
+      "v1_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Items API", "version": "1.0.0" },
+        "paths": {
+          "/items": {
+            "post": {
+              "responses": {
+                "200": { "description": "OK" },
+                "201": { "description": "Created" }
+              }
+            }
+          }
+        }
+      },
+      "v2_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Items API", "version": "2.0.0" },
+        "paths": {
+          "/items": {
+            "post": {
+              "responses": {
+                "200": { "description": "OK" }
+              }
+            }
+          }
+        }
+      },
+      "expected_change_count": 1,
+      "expected_breaking_count": 0
+    },
+    {
+      "case_id": "TC_14_COMPOUND_REQUEST_BODY_REQUIRED",
+      "name": "Request Body Made Mandatory on POST /feedback",
+      "ground_truth_severity": "breaking",
+      "category": "request_body_mutation",
+      "v1_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Feedback API", "version": "1.0.0" },
+        "paths": {
+          "/feedback": {
+            "post": {
+              "requestBody": {
+                "required": false,
+                "content": { "application/json": { "schema": { "type": "object" } } }
+              },
+              "responses": { "200": { "description": "OK" } }
+            }
+          }
+        }
+      },
+      "v2_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Feedback API", "version": "2.0.0" },
+        "paths": {
+          "/feedback": {
+            "post": {
+              "requestBody": {
+                "required": true,
+                "content": { "application/json": { "schema": { "type": "object" } } }
+              },
+              "responses": { "200": { "description": "OK" } }
+            }
+          }
+        }
+      },
+      "expected_change_count": 1,
+      "expected_breaking_count": 1
+    },
+    {
+      "case_id": "TC_15_INCONCLUSIVE_BEHAVIOR_ABSTENTION",
+      "name": "Ambiguous Header Format Drift with Honest Abstention",
+      "ground_truth_severity": "caution",
+      "category": "abstention_checkpoint",
+      "v1_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Gateway API", "version": "1.0.0" },
+        "components": {
+          "schemas": {
+            "CustomHeader": {
+              "type": "object",
+              "properties": {
+                "meta": { "type": "string", "format": "date-time" }
+              }
+            }
+          }
+        }
+      },
+      "v2_spec": {
+        "openapi": "3.0.0",
+        "info": { "title": "Gateway API", "version": "2.0.0" },
+        "components": {
+          "schemas": {
+            "CustomHeader": {
+              "type": "object",
+              "properties": {
+                "meta": { "type": "string", "format": "iso8601-custom" }
+              }
+            }
+          }
+        }
+      },
+      "expected_change_count": 1,
+      "expected_breaking_count": 0
+    }
+  ]
+}

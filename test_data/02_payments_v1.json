@@ -1,0 +1,32 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Payments Gateway API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/v1/charges": {
+      "post": {
+        "summary": "Create charge",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["amount", "currency"],
+                "properties": {
+                  "amount": { "type": "integer" },
+                  "currency": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Charge created" }
+        }
+      }
+    }
+  }
+}

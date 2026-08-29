@@ -11,9 +11,13 @@ export type ChangeType =
   | "new_response_field"
   | "status_code_change"
   | "parameter_removed"
-  | "parameter_type_change";
+  | "parameter_type_change"
+  | "enum_value_removed"
+  | "request_body_made_required"
+  | "format_changed"
+  | "uncertain_drift";
 
-export type Severity = "breaking" | "caution" | "safe";
+export type Severity = "breaking" | "caution" | "safe" | "uncertain";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "OPTIONS" | "HEAD";
 
@@ -34,6 +38,7 @@ export interface TestEvidence {
   v1Result: string;
   v2Result: string;
   confirms: string;
+  verified?: boolean;
 }
 
 export interface ApiChange {
@@ -47,6 +52,9 @@ export interface ApiChange {
   evidence: string;
   schemaChanges?: SchemaChange[];
   confidence: number;
+  verified?: boolean;
+  verificationStatus?: string;
+  abstentionReason?: string;
   impactItems?: ImpactItem[];
   testEvidence?: TestEvidence;
   recommendation?: string;
@@ -59,6 +67,7 @@ export interface AnalysisResult {
     breaking: number;
     caution: number;
     safe: number;
+    uncertain?: number;
     total: number;
     impactScore: number;
   };
@@ -66,6 +75,13 @@ export interface AnalysisResult {
   specV1Name: string;
   specV2Name: string;
   analyzedAt: string;
+  metrics?: {
+    macroF1?: number;
+    precision?: number;
+    recall?: number;
+    unsupportedClaims?: number;
+    abstentionEnabled?: boolean;
+  };
 }
 
 export interface HistoryEntry {
@@ -75,4 +91,29 @@ export interface HistoryEntry {
   analyzedAt: string;
   summary: AnalysisResult["summary"];
   result: AnalysisResult;
+}
+
+export interface BenchmarkMetrics {
+  precision: number;
+  recall: number;
+  f1Score: number;
+  accuracy: number;
+  falsePositiveRate: number;
+  tp: number;
+  fp: number;
+  fn: number;
+  tn: number;
+}
+
+export interface BenchmarkComparison {
+  suiteName: string;
+  totalCases: number;
+  baseline: BenchmarkMetrics;
+  driftshield: BenchmarkMetrics;
+  improvement: {
+    f1Delta: number;
+    f1PercentageIncrease: string;
+    falsePositiveReduction: string;
+    unsupportedClaimRate: string;
+  };
 }

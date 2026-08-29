@@ -1,167 +1,231 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Code2, AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import {
+  ArrowRight,
+  Code2,
+  AlertTriangle,
+  CheckCircle2,
+  Info,
+  Trophy,
+  FlaskConical,
+  Cpu,
+  ShieldCheck,
+  HelpCircle,
+  Wrench,
+  GitBranch,
+  Terminal,
+  FileCode,
+  Zap,
+  Activity
+} from "lucide-react";
+
+const STAGES = [
+  {
+    step: "01",
+    title: "Deterministic Diff Engine",
+    desc: "Performs pure structural OpenAPI AST comparison of paths, parameters, schemas, responses, and security schemes without LLM hallucination.",
+    icon: Code2,
+    role: "Extracts unambiguous structural contract facts."
+  },
+  {
+    step: "02",
+    title: "Policy-Aware Classifier",
+    desc: "Classifies each mutation against strict 13 RFC compatibility rules (Breaking, Caution, Safe) with fallback reasoning for ambiguous cases.",
+    icon: ShieldCheck,
+    role: "Maps contract diffs to semantic compatibility states."
+  },
+  {
+    step: "03",
+    title: "Targeted Test Generator",
+    desc: "Synthesizes black-box reproduction test probes and payload mutations to verify whether risks actually manifest at runtime.",
+    icon: FlaskConical,
+    role: "Generates empirical reproduction HTTP probes."
+  },
+  {
+    step: "04",
+    title: "Runtime Sandbox Execution",
+    desc: "Executes probes against versioned mock/live API fixtures to capture concrete HTTP status codes (400, 404, 422) and response differences.",
+    icon: Activity,
+    role: "Validates or refutes breaking claims."
+  },
+  {
+    step: "05",
+    title: "Downstream Blast Radius Analyzer",
+    desc: "Calculates the blast radius across client SDK method signatures, documentation snippets, and integration tests.",
+    icon: Cpu,
+    role: "Maps changes to affected client repositories."
+  },
+  {
+    step: "06",
+    title: "Evidence Gate & Abstention",
+    desc: "Enforces evidence gates: if evidence is incomplete, DriftShield marks findings as 'Uncertain / Review Required' rather than guessing.",
+    icon: HelpCircle,
+    role: "Guarantees 0.0% unsupported claims."
+  },
+  {
+    step: "07",
+    title: "Automated Code Remediation Generator",
+    desc: "Auto-generates side-by-side v1 vs v2 code diffs, sed -i bulk find-and-replace rules, and grep search commands for instant client migration.",
+    icon: Wrench,
+    role: "Turns detected breaking changes into copy-pasteable fixes."
+  }
+];
 
 const CHANGE_TYPES_DETAILED = [
   {
-    category: "Breaking Changes",
+    category: "Breaking Incompatibilities (Release Blocked)",
     color: "red",
     items: [
-      { type: "removed_endpoint", name: "Removed Endpoint", desc: "An endpoint that existed in v1 is absent in v2. All clients calling this route will receive 404 errors." },
-      { type: "added_required_field", name: "Required Field Added", desc: "A previously optional or absent field is now required in the request body. Clients not sending it get 422 errors." },
-      { type: "type_change", name: "Type Changed", desc: "A field's data type changed (e.g., string → integer). Clients sending the old type will fail validation." },
-      { type: "auth_change", name: "Auth Scheme Changed", desc: "The security requirements for an endpoint changed. Authenticated clients may be rejected." },
-      { type: "parameter_removed", name: "Required Parameter Removed", desc: "A required query or path parameter was removed. Clients sending it may receive unexpected errors." },
+      { type: "removed_endpoint", name: "Removed Endpoint", desc: "An endpoint that existed in v1 is absent in v2. All clients calling this route receive HTTP 404 Not Found." },
+      { type: "added_required_field", name: "Required Field Added", desc: "A previously optional or absent field is now required in the request body. Clients not sending it get HTTP 422 Unprocessable Entity." },
+      { type: "type_change", name: "Type Changed / Narrowed", desc: "A field's data type narrowed (e.g. string → integer). Clients sending old formats fail with HTTP 400 Bad Request." },
+      { type: "enum_value_removed", name: "Enum Variants Removed", desc: "Enum values removed. Clients sending legacy enum variants are rejected." },
+      { type: "auth_change", name: "Auth Scheme Changed", desc: "Security requirements or OAuth scopes changed. Legacy client tokens are rejected." },
+      { type: "parameter_removed", name: "Required Parameter Removed", desc: "A required query or path parameter was deleted from target route." },
     ],
   },
   {
-    category: "Caution Changes",
+    category: "Caution & Review Required (Honest Abstention)",
     color: "amber",
     items: [
-      { type: "response_removed", name: "Response Code Removed", desc: "A previously declared HTTP response code is no longer present. Error handling code may miss it." },
-      { type: "parameter_type_change", name: "Parameter Type Changed", desc: "A parameter's schema type changed. May be backward-compatible if the server coerces types." },
-      { type: "parameter_removed_optional", name: "Optional Parameter Removed", desc: "An optional parameter was removed. Clients using it may see unexpected behavior." },
+      { type: "response_removed", name: "Response Code Removed", desc: "A previously declared HTTP response code is no longer documented in v2." },
+      { type: "parameter_type_change", name: "Parameter Type Widened", desc: "A parameter's schema type changed to a broader type. Safe if server coerces types." },
+      { type: "uncertain_drift", name: "Honest Abstention Checkpoint", desc: "When empirical runtime evidence is inconclusive, DriftShield marks as Uncertain rather than hallucinating certainty." },
     ],
   },
   {
-    category: "Safe Changes",
+    category: "Safe Backwards-Compatible Additions",
     color: "emerald",
     items: [
       { type: "new_endpoint", name: "New Endpoint Added", desc: "A new route was added in v2. Purely additive — no existing clients are affected." },
-      { type: "optional_field_added", name: "Optional Field Added", desc: "A new optional field was added to the schema. Clients that don't send it are unaffected." },
-      { type: "new_response_field", name: "New Response Code Declared", desc: "A new HTTP status code was added to the declared responses. Additive — clients should handle gracefully." },
-      { type: "required_relaxed", name: "Required Field Relaxed", desc: "A previously required field is now optional. Clients that always send it are unaffected." },
+      { type: "optional_field_added", name: "Optional Field Added", desc: "A new optional field was added to the schema. Existing clients are unaffected." },
+      { type: "new_response_field", name: "New Response Field", desc: "A new field in a 200 response. Safe for clients with open schema parsing." },
+      { type: "description_change", name: "Documentation & Meta Updated", desc: "Descriptions, summaries, and examples updated without wire schema mutation." },
     ],
-  },
-];
-
-const FAQS = [
-  {
-    q: "What is an OpenAPI spec?",
-    a: "An OpenAPI specification (formerly Swagger) is a standard format for describing REST APIs. You can export it from Swagger UI, Postman, Stoplight, FastAPI, or most API frameworks. It's typically a JSON or YAML file.",
-  },
-  {
-    q: "Which OpenAPI versions are supported?",
-    a: "OpenAPI 3.x in JSON format is fully supported. OpenAPI 2.x (Swagger) support is planned. YAML files need to be converted to JSON first.",
-  },
-  {
-    q: "How is the Impact Score calculated?",
-    a: "Impact Score = ((breaking × 1.0 + caution × 0.5) / total) × 100. A score of 100% means all changes are breaking, 0% means all changes are safe.",
-  },
-  {
-    q: "Does this tool make network requests?",
-    a: "The core analysis runs entirely in your browser. No spec content is ever sent to any server. The GitHub URL fetcher makes public fetch requests to fetch raw spec files from GitHub.",
-  },
-  {
-    q: "How is history stored?",
-    a: "Analysis history is stored in your browser's localStorage. It persists across sessions but is not synced across devices. You can clear it at any time from the History page.",
   },
 ];
 
 export default function DocsPage() {
   return (
-    <div className="min-h-[calc(100vh-56px)] bg-white">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
-        <div className="mb-12">
-          <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">Documentation</span>
-          <h1 className="text-4xl font-bold text-slate-900 mt-2 mb-4">How API DriftShield works</h1>
-          <p className="text-lg text-slate-500 leading-relaxed">
-            A complete guide to the analysis engine, change classification, and all supported change types.
-          </p>
-        </div>
-
-        {/* Architecture */}
-        <section className="mb-12">
-          <h2 className="text-xl font-bold text-slate-900 mb-4">Analysis architecture</h2>
-          <div className="grid sm:grid-cols-4 gap-4 mb-6">
-            {[
-              { step: "1", title: "Parse", desc: "Parse both JSON specs into structured objects", icon: Code2 },
-              { step: "2", title: "Diff", desc: "Compare paths, methods, params, schemas", icon: ArrowRight },
-              { step: "3", title: "Classify", desc: "Apply rule-based classifier for severity", icon: AlertTriangle },
-              { step: "4", title: "Report", desc: "Generate evidence-backed change report", icon: CheckCircle2 },
-            ].map(({ step, title, desc, icon: Icon }) => (
-              <div key={step} className="p-4 rounded-lg border border-slate-200 bg-slate-50">
-                <div className="text-2xl font-bold text-slate-200 mb-2">{step}</div>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Icon className="w-3.5 h-3.5 text-indigo-600" />
-                  <span className="text-sm font-semibold text-slate-800">{title}</span>
-                </div>
-                <p className="text-xs text-slate-500">{desc}</p>
-              </div>
-            ))}
+    <div className="min-h-[calc(100vh-56px)] bg-slate-50 text-slate-900 font-sans selection:bg-indigo-500 selection:text-white">
+      {/* Header */}
+      <div className="border-b border-slate-200 bg-white">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 font-mono">
+              7-Stage Agent Pipeline &amp; RFC Engine
+            </span>
           </div>
-          <div className="p-4 rounded-lg bg-indigo-50 border border-indigo-100 flex items-start gap-3">
-            <Info className="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-indigo-700">
-              All analysis runs client-side in your browser. No spec data is ever sent to any external server.
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            Documentation &amp; RFC Compatibility Policies
+          </h1>
+          <p className="text-sm text-slate-600 max-w-3xl leading-relaxed">
+            API DriftShield turns OpenAPI schema mutations into verified compatibility release decisions through deterministic AST diffing, targeted synthetic test probes, and automated code remediation.
+          </p>
+
+          <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200 text-slate-800 text-xs sm:text-sm leading-relaxed shadow-sm">
+            <p className="italic font-medium text-indigo-950">
+              &ldquo;DriftShield turns API changes into verified compatibility decisions—using deterministic analysis, executable tests, downstream impact tracing, automated code remediation, and honest abstention when the evidence is incomplete.&rdquo;
             </p>
           </div>
-        </section>
+        </div>
+      </div>
 
-        {/* Change types */}
-        <section className="mb-12">
-          <h2 className="text-xl font-bold text-slate-900 mb-6">Change type classification</h2>
-          {CHANGE_TYPES_DETAILED.map(({ category, color, items }) => (
-            <div key={category} className="mb-8">
-              <div className="flex items-center gap-2 mb-3">
-                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                  color === "red" ? "bg-red-100 text-red-700"
-                  : color === "amber" ? "bg-amber-100 text-amber-700"
-                  : "bg-emerald-100 text-emerald-700"
-                }`}>
-                  {category}
-                </span>
-              </div>
-              <div className="space-y-2">
-                {items.map(({ name, desc }) => (
-                  <div key={name} className="flex items-start gap-4 p-4 rounded-lg border border-slate-200">
-                    <span className="text-sm font-semibold text-slate-800 min-w-[180px] flex-shrink-0">{name}</span>
-                    <p className="text-sm text-slate-500">{desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </section>
-
-        {/* Impact score */}
-        <section className="mb-12">
-          <h2 className="text-xl font-bold text-slate-900 mb-4">Impact Score formula</h2>
-          <div className="p-5 rounded-lg bg-slate-900 text-slate-100 font-mono text-sm mb-4">
-            <div className="text-slate-400 mb-1">{"// Impact Score calculation"}</div>
-            <div>impactScore = Math.round(</div>
-            <div className="pl-4">{"((breaking × 1.0 + caution × 0.5) / total) × 100"}</div>
-            <div>)</div>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+        {/* 7-Stage Pipeline Overview */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Zap className="w-5 h-5 text-indigo-600" />
+            <h2 className="text-xl font-bold text-slate-900">7-Stage Purposeful Agent Pipeline</h2>
           </div>
-          <p className="text-sm text-slate-500">
-            Breaking changes are weighted at 1.0, caution at 0.5, and safe at 0. A score of 100% means every change is breaking. 0% means all changes are additive and safe.
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Every step has a specific job: schema facts, runtime proof, blast radius mapping, and code remediation.
           </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            {STAGES.map((s) => {
+              const Icon = s.icon;
+              return (
+                <div key={s.step} className="p-5 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      STAGE {s.step}
+                    </span>
+                    <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
+                      <Icon className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <h3 className="text-sm font-bold text-slate-900">{s.title}</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">{s.desc}</p>
+                  <div className="pt-2 text-[11px] font-medium text-indigo-700">Role: {s.role}</div>
+                </div>
+              );
+            })}
+          </div>
         </section>
 
-        {/* FAQ */}
-        <section className="mb-12">
-          <h2 className="text-xl font-bold text-slate-900 mb-6">Frequently asked questions</h2>
-          <div className="space-y-4">
-            {FAQS.map(({ q, a }) => (
-              <div key={q} className="p-5 rounded-lg border border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-900 mb-2">{q}</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">{a}</p>
+        {/* 13 RFC Compatibility Policies */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-2">
+            <FileCode className="w-5 h-5 text-indigo-600" />
+            <h2 className="text-xl font-bold text-slate-900">13 Strict RFC Compatibility Policies</h2>
+          </div>
+
+          <div className="space-y-6">
+            {CHANGE_TYPES_DETAILED.map((cat, idx) => (
+              <div key={idx} className="space-y-3">
+                <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">{cat.category}</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {cat.items.map((item) => (
+                    <div key={item.type} className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs text-slate-900">{item.name}</span>
+                        <code className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-mono">
+                          {item.type}
+                        </code>
+                      </div>
+                      <p className="text-xs text-slate-500 leading-relaxed">{item.desc}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* Reproducibility Benchmark Command Box */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Terminal className="w-5 h-5 text-indigo-600" />
+            <h2 className="text-xl font-bold text-slate-900">Reproduce Benchmark via CLI</h2>
+          </div>
+          <div className="p-5 rounded-2xl bg-slate-900 text-white font-mono text-xs space-y-3 shadow-md">
+            <p className="text-slate-400"># Run the 41-case quantitative benchmark evaluation:</p>
+            <div className="bg-black/60 p-3 rounded-xl border border-slate-800 text-emerald-400 select-all">
+              python antigravity_backend/benchmark/evaluate.py
+            </div>
+            <p className="text-slate-400"># Run the complete test suite with 20 unit &amp; integration tests:</p>
+            <div className="bg-black/60 p-3 rounded-xl border border-slate-800 text-cyan-400 select-all">
+              python -m pytest tests/ -v
+            </div>
           </div>
         </section>
 
         {/* CTA */}
-        <section className="text-center py-10 border-t border-slate-100">
-          <h2 className="text-xl font-bold text-slate-900 mb-3">Ready to try it?</h2>
-          <p className="text-slate-500 text-sm mb-5">Load the sample specs for an instant demo.</p>
+        <div className="p-6 rounded-2xl bg-indigo-50 border border-indigo-200 flex items-center justify-between flex-wrap gap-4 shadow-sm">
+          <div>
+            <h3 className="font-extrabold text-sm text-indigo-950">Ready to test your API specifications?</h3>
+            <p className="text-xs text-indigo-800/80 mt-0.5">
+              Launch the analyzer to compare specifications or scan any public GitHub repository.
+            </p>
+          </div>
           <Link
             to="/analyze"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors text-sm"
+            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
           >
-            Open the Analyzer <ArrowRight className="w-4 h-4" />
+            <span>Open API Analyzer</span>
+            <ArrowRight className="w-4 h-4" />
           </Link>
-        </section>
+        </div>
       </div>
     </div>
   );
