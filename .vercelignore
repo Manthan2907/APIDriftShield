@@ -1,0 +1,17 @@
+# Vercel Serverless Function Ignore File
+# Exclude offline datasets, tests, and documentation from the function bundle to keep bundle < 20MB
+
+prompts_md/
+test_data/
+example_specs/
+antigravity_backend/benchmark/specs/
+antigravity_backend/benchmark/mutations/
+antigravity_backend/baselines/
+tests/
+.git/
+.pytest_cache/
+*.log
+*.png
+*.jpg
+*.md
+bun.lock
