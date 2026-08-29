@@ -22,6 +22,7 @@ import ChangeItem from "@/components/features/ChangeItem";
 import FilterBar from "@/components/features/FilterBar";
 import BenchmarkModal from "@/components/features/BenchmarkModal";
 import { MigrationPathPanel } from "@/components/features/MigrationPathPanel";
+import { AiRemediationModal } from "@/components/features/AiRemediationModal";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,7 @@ export default function ResultsPanel({ result }: { result: AnalysisResult }) {
   const [methodFilter, setMethodFilter] = useState<MethodFilter>("all");
   const [copied, setCopied] = useState(false);
   const [showBenchmark, setShowBenchmark] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
 
   const filtered = result.changes.filter((c) => {
     const sevOk = severityFilter === "all" || c.severity === severityFilter;
@@ -400,6 +402,16 @@ ${safeRows}
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {result.summary.breaking > 0 && (
+            <button
+              onClick={() => setShowAiModal(true)}
+              className="flex items-center gap-1.5 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl px-3.5 py-2 transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              AI Fix Prompt (Cursor / Claude)
+            </button>
+          )}
+
           <button
             onClick={() => setShowBenchmark(true)}
             className="flex items-center gap-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl px-3.5 py-2 transition-all shadow-sm cursor-pointer"
@@ -508,6 +520,15 @@ ${safeRows}
 
       {/* Benchmark Scorecard Modal */}
       <BenchmarkModal isOpen={showBenchmark} onClose={() => setShowBenchmark(false)} />
+
+      {/* AI Strategic Remediation & Unified Fix Prompt Modal */}
+      <AiRemediationModal
+        isOpen={showAiModal}
+        onClose={() => setShowAiModal(false)}
+        breakingChanges={result.changes.filter((c) => c.severity === "breaking")}
+        v1SpecName={result.specV1Name}
+        v2SpecName={result.specV2Name}
+      />
     </div>
   );
 }
