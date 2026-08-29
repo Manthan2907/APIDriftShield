@@ -124,7 +124,6 @@ class MigrationPathRequest(BaseModel):
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
-@app.get("/", summary="Root Status")
 @app.get("/health", summary="Health Check")
 @app.get("/api/health", summary="API Health Check")
 async def health():
@@ -592,6 +591,7 @@ dist_candidates = [
     os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "dist")),
     os.path.abspath(os.path.join(os.path.dirname(__file__), "dist")),
     os.path.abspath("dist"),
+    os.path.abspath("/app/dist"),
 ]
 
 dist_dir = next((d for d in dist_candidates if os.path.exists(d) and os.path.isdir(d)), None)
@@ -602,19 +602,34 @@ if dist_dir:
     if os.path.exists(assets_dir):
         app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 
+    @app.get("/", include_in_schema=False)
     @app.get("/{full_path:path}", include_in_schema=False)
-    async def serve_spa(full_path: str):
-        if full_path.startswith("api/") or full_path in ("docs", "redoc", "openapi.json"):
+    async def serve_spa(full_path: str = ""):
+        if full_path.startswith("api/") or full_path in ("docs", "redoc", "openapi.json", "health"):
             raise HTTPException(status_code=404, detail="Not Found")
         
         target = os.path.join(dist_dir, full_path)
-        if os.path.exists(target) and os.path.isfile(target):
+        if full_path and os.path.exists(target) and os.path.isfile(target):
             return FileResponse(target)
         
         index_file = os.path.join(dist_dir, "index.html")
         if os.path.exists(index_file):
             return FileResponse(index_file)
-        raise HTTPException(status_code=404, detail="index.html not found")
+        raise HTTPException(status_code=404, detail="index.html not found in dist")
+else:
+    logger.warning("No dist/ frontend directory found. Running in API-only mode.")
+    @app.get("/", summary="Root Status")
+    async def root_fallback():
+        return {
+            "status": "healthy",
+            "service": "API DriftShield Backend API",
+            "version": "1.0.0",
+            "message": "Backend is active. Mount dist/ directory to enable full-stack UI.",
+            "endpoints": {
+                "health": "/api/health",
+                "docs": "/docs"
+            }
+        }
 
 
 if __name__ == "__main__":
