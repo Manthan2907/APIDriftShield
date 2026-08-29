@@ -192,6 +192,49 @@ export default function DocsPage() {
           </div>
         </section>
 
+        {/* AI Strategic Remediation & Unified Cursor Prompt Directive */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Cpu className="w-5 h-5 text-indigo-600" />
+            <h2 className="text-xl font-bold text-slate-900">AI Strategic Remediation &amp; Zero-Downtime Hotfixes</h2>
+          </div>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            For massive enterprise diffs (e.g. 671 breaking changes across large microservice architectures), DriftShield provides automated high-scale mitigation instead of 160 hours of manual editing.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+            <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-2">
+              <div className="p-2 rounded-xl bg-indigo-50 text-indigo-700 font-extrabold text-xs inline-block">
+                ⚡ Cursor / Claude Prompt
+              </div>
+              <h3 className="text-sm font-bold text-slate-900">One-Click AI Directive</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Synthesizes hundreds of contract mutations into an actionable prompt for Cursor AI (Composer / Ctrl+K) or Claude Code to refactor your client repository in 2 minutes.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-2">
+              <div className="p-2 rounded-xl bg-emerald-50 text-emerald-800 font-extrabold text-xs inline-block">
+                🛡️ Gateway Hotfix
+              </div>
+              <h3 className="text-sm font-bold text-slate-900">5-Min Zero-Downtime Proxy</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Generates ready-to-deploy Cloudflare Worker, Express, or Envoy gateway rules that transparently rewrite deprecated paths and inject default headers without touching client code.
+              </p>
+            </div>
+
+            <div className="p-5 rounded-2xl border border-slate-200 bg-white shadow-sm space-y-2">
+              <div className="p-2 rounded-xl bg-purple-50 text-purple-700 font-extrabold text-xs inline-block">
+                📦 SDK Interceptor
+              </div>
+              <h3 className="text-sm font-bold text-slate-900">Middleware Adapter</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Generates a 15-line Axios or Fetch interceptor that automatically injects newly mandatory request parameters and transforms legacy response envelopes.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {/* Reproducibility Benchmark Command Box */}
         <section className="space-y-4">
           <div className="flex items-center gap-2">

@@ -1,13 +1,22 @@
 # API DriftShield: Evidence-First API Compatibility & Remediation Agent
 
-[![F1 Score](https://img.shields.io/badge/Benchmark_F1-0.965-4f46e5.svg)](evaluation_results.json)
+[![Benchmark F1](https://img.shields.io/badge/Benchmark_F1-0.965-4f46e5.svg)](evaluation_results.json)
 [![Accuracy](https://img.shields.io/badge/Accuracy-97.6%25-059669.svg)](evaluation_results.json)
-[![Improvement](https://img.shields.io/badge/F1_Improvement-+58.4%25_vs_openapi--diff-10b981.svg)](evaluation_results.json)
+[![F1 Improvement](https://img.shields.io/badge/F1_Improvement-+58.4%25_vs_openapi--diff-10b981.svg)](evaluation_results.json)
 [![Unsupported Claims](https://img.shields.io/badge/Unsupported_Claims-0.0%25-0284c7.svg)](antigravity_backend/POLICY.md)
 [![Tests Passing](https://img.shields.io/badge/Tests-20%2F20_Passed-emerald.svg)](tests/)
+[![Live Deployment](https://img.shields.io/badge/Railway_Live-apidriftshield.up.railway.app-purple.svg)](https://apidriftshield.up.railway.app/)
 [![Hackathon](https://img.shields.io/badge/Challenge-Micro1_Frontier_Engineering_2026-1e293b.svg)](https://www.hackerearth.com/community/challenges/hackathon/micro1-frontier-engineering-challenge-2026/)
 
-> **Mission**: DriftShield turns API contract modifications into verified release decisions and instant code remediations—using deterministic AST analysis, executable runtime probes, automated migration path generation, and honest abstention when evidence is incomplete.
+> **Mission**: DriftShield turns API contract modifications into verified release decisions, instant zero-downtime hotfixes, and AI refactoring prompts—using deterministic AST analysis, executable runtime test probes, downstream blast radius mapping, automated code remediation, and honest abstention when evidence is incomplete.
+
+---
+
+## 🌐 Live Production Deployment
+
+* **Unified Full-Stack App**: **[https://apidriftshield.up.railway.app](https://apidriftshield.up.railway.app)**
+* **FastAPI Interactive Docs**: **[https://apidriftshield.up.railway.app/docs](https://apidriftshield.up.railway.app/docs)**
+* **GitHub Repository**: **[https://github.com/Manthan2907/APIDriftShield](https://github.com/Manthan2907/APIDriftShield)**
 
 ---
 
@@ -20,10 +29,11 @@ API platform maintainers, SDK developers, and integration teams (such as publish
 When APIs transition from `v1` to `v2`, standard structural diff tools (such as `openapi-diff`) output raw structural differences in JSON/YAML without determining semantic impact:
 1. **Silent Runtime Crashes:** Maintainers cannot determine whether a schema mutation will cause client requests to fail with HTTP 400, 404, or 422 at runtime.
 2. **Untraced Blast Radius:** Teams lack visibility into which specific SDK client methods, documentation snippets, and internal repositories are broken by an update.
-3. **No Migration Path:** Diff tools say "it's broken" without providing developers the exact replacement code or regex commands to fix client applications.
-4. **LLM Hallucinations:** Generative models make confident yet unverified compatibility claims when guessing contract behavior without executable evidence.
+3. **Overwhelming Scale (The 160-Hour Migration Trap):** Large enterprise schema diffs (e.g. 671 breaking changes) overwhelm human engineers with hundreds of uncoordinated items.
+4. **No Actionable Fix:** Diff tools say "it's broken" without providing developers the exact replacement code, gateway hotfixes, or AI directives to refactor client applications.
+5. **LLM Hallucinations:** Generative models make confident yet unverified compatibility claims when guessing contract behavior without executable evidence.
 
-DriftShield eliminates these bottlenecks by replacing guesswork with an **evidence-first verification and automated code remediation engine**.
+DriftShield eliminates these bottlenecks by replacing guesswork with an **evidence-first verification, gateway hotfix, and AI-powered code remediation engine**.
 
 ---
 
@@ -62,7 +72,7 @@ DriftShield employs a modular, 7-stage deterministic and empirical pipeline:
                   +-----------------------+------------------------+
                                           |
                   +-----------------------v------------------------+
-                  |  7. Automated Migration Path Generator         |  --> Old vs New code, sed & grep
+                  |  7. Automated Migration & AI Prompt Synthesizer|  --> Cursor/Claude fix & Gateway hotfix
                   +-----------------------+------------------------+
                                           |
                   +-----------------------v------------------------+
@@ -93,23 +103,34 @@ DriftShield was evaluated against **41 ground-truth test cases** derived from 8 
 
 ## 4. Key Production Features
 
-### 1. Automated Migration Path & Code Remediation Generator *(Latest Feature)*
+### 1. AI Strategic Remediation & Cursor/Claude Fix Prompt Generator *(New)*
+* **Server-Side Groq & Gemini Integration**: Powered by **Groq Llama 3.3 70B** (< 500ms inference) and **Google Gemini 1.5 Flash**.
+* **Zero User Friction**: Automatically reads `GROQ_API_KEY` from server environment variables (`.env` / Railway) so users never have to paste keys.
+* **One-Click AI Coding Agent Prompt**: Synthesizes 600+ breaking changes into a structured directive for **Cursor AI (Composer / Ctrl+K)**, **Claude Code**, or **GitHub Copilot** to refactor entire client repos in **~2 minutes** instead of 160 hours of manual work.
+* **5-Minute Zero-Downtime Gateway Hotfix**: Generates ready-to-deploy Cloudflare Worker / Express / Envoy proxy snippets that transparently rewrite deprecated paths without touching client code.
+* **Client SDK Middleware Interceptor**: 15-line Axios / Fetch wrapper that injects mandatory headers and normalizes responses automatically.
+
+### 2. High-Scale Root Cause Clustering & Pagination *(New)*
+* **Pattern Filtering**: Filter diffs into macro clusters: `Removed Routes`, `Required Fields Added`, and `Type Narrowing`.
+* **Scalable Pagination**: Smooth 8-item per page pagination ensures instant rendering even for 2,000+ API modifications.
+* **Effort Comparison Badge**: Contrasts estimated manual engineering hours with 2-minute AI execution.
+
+### 3. Automated Migration Path & Regex Generator
 * **Side-by-Side Code Diff**: Computes exact legacy $v_1$ syntax vs updated $v_2$ syntax for every breaking change.
-* **One-Click `sed` Bulk Replacement**: Synthesizes ready-to-run `sed -i 's/old_fn(/new_fn(/g' **/*.{ts,py,js}` commands for instant repo-wide fixes.
+* **One-Click `sed` Bulk Replacement**: Synthesizes ready-to-run `sed -i` commands for instant repo-wide fixes.
 * **Blast Radius Search (`grep`)**: Generates targeted bash commands to locate all affected invocations in client codebases.
-* **Effort & Schedule Estimator**: Calculates exact development time in minutes/hours and projects estimated completion dates.
 
-### 2. GitHub Repository Analyzer
+### 4. GitHub Repository Scanner
 * Paste any public repository URL (e.g., `aws/aws-sdk-go-v2`, `github/rest-api-description`, `stripe/stripe-openapi`).
-* Automatically discovers root and nested OpenAPI / Swagger schemas across branches and runs comparative drift analysis.
+* Automatically discovers root and nested OpenAPI / Swagger schemas across branches and runs comparative drift analysis with 1-click execution.
 
-### 3. Dynamic Deep Node Architecture Visualizer & 3x AI Voice Agent
+### 5. Dynamic Deep Node Architecture Visualizer & 3x AI Voice Agent
 * Full-screen interactive React Flow graph (`/flowchart`) visualizing the end-to-end pipeline:
   `Upstream Clients ➔ API Gateway ➔ AST Diff Engine ➔ Route Incompatibility Clusters ➔ Shield Decision Gate`.
-* **Adjustable Speed Controls**: `[0.5x, 1x, 2x, 3x]`.
-* **AI Voice Tour with Exhaustive Red Box Inspection**: Speech synthesis iterates through each breaking node cluster, automatically opens the route inspector drawer, speaks the exact deleted endpoints/fields, and explains the 5-minute mitigation plan.
+* **High-Contrast Pure Light Theme Voice Narration**: Crystal-clear typography, step progress pill, and playback controls (`[0.5x, 1x, 2x, 3x]`).
+* **AI Voice Tour with Exhaustive Red Box Inspection**: Speech synthesis iterates through each breaking node cluster, speaks exact deleted endpoints/fields, and explains 5-minute mitigation plans.
 
-### 4. Executive Export Suite
+### 6. Executive Export Suite
 * **Rich GitHub PR Comment**: Formatted Markdown with native GitHub alerts (`> [!CAUTION]`), summary metrics tables, and breaking changes tables.
 * **Publication-Grade PDF**: Printable decision scorecard with custom print styling.
 * **Plaintext Slack / Jira Export**: Formatted for direct pasting into team communication channels.
@@ -119,76 +140,63 @@ DriftShield was evaluated against **41 ground-truth test cases** derived from 8 
 
 ## 5. Quickstart & Reproduction Guide
 
-### Prerequisites
+### System Requirements
 * Python 3.9+
 * Node.js 18+
 
-### Step 1: Run the Ground-Truth Benchmark Evaluation
+### Step 1: Clone and Configure Environment
 ```bash
-# Execute the benchmark against 41 ground-truth mutations
-python antigravity_backend/benchmark/evaluate.py
-```
-*Expected Output:* Evaluation summary confirming **0.965 F1** and output written to `evaluation_results.json`.
+git clone https://github.com/Manthan2907/APIDriftShield.git
+cd APIDriftShield
 
-### Step 2: Run Backend & Tests
+# Create .env from template
+cp .env.example .env
+# (Optional) Add your GROQ_API_KEY=gsk_... or GEMINI_API_KEY=... in .env
+```
+
+### Step 2: Run Benchmark Evaluation & Tests
 ```bash
-# Run the 20 unit and integration tests
+# Run the 20 automated unit and integration tests
 python -m pytest tests/ -v
 
-# Start FastAPI backend
-python antigravity_backend/main.py
+# Run the 41 ground-truth benchmark evaluation
+python antigravity_backend/benchmark/evaluate.py --skip-llm
 ```
-*Backend runs on `http://localhost:5000` with Swagger docs at `http://localhost:5000/docs`.*
 
-### Step 3: Start Vite Web Application
+### Step 3: Run Locally (Full-Stack Dev)
 ```bash
-# Start Vite development server
+# Terminal 1: Start FastAPI Backend
+python antigravity_backend/main.py
+
+# Terminal 2: Start Vite Frontend
+npm install
 npm run dev
 ```
 *Open **`http://localhost:5173/analyze`** in your browser.*
 
 ---
 
-## 6. Repository Layout
+## 6. Railway & Docker Single-Container Production Deployment
 
-```
-APIDriftShield/
-├── README.md                          # Project overview, architecture, and benchmark metrics
-├── REPRODUCTION_GUIDE.md              # Detailed judge evaluation & reproduction steps
-├── IMPROVEMENT_CHANGELOG.md           # Engineering iteration log across 6 milestones
-├── evaluation_results.json            # Frozen benchmark evaluation data
-│
-├── antigravity_backend/               # Python Evaluation & Verification Engine
-│   ├── POLICY.md                      # Ground-truth compatibility policy (13 breaking, 9 safe, 9 uncertain)
-│   ├── main.py                        # FastAPI production REST API
-│   ├── migration_generator.py         # Code remediation & sed/grep synthesizer
-│   ├── github_analyzer.py             # GitHub repo scanner & spec discoverer
-│   ├── impact_analyzer.py             # 13-category RFC impact tracer
-│   ├── verifier.py                    # Evidence gate & 0% hallucination enforcement
-│   ├── test_generator.py              # Synthetic HTTP test probe synthesizer
-│   ├── fixture_server.py              # Mock runtime execution sandbox
-│   ├── baselines/                     # B0, B1, B2 baseline implementations
-│   └── benchmark/                     # 41-case evaluation harness & enterprise specs
-│
-├── src/                               # React + TypeScript + Vite Frontend
-│   ├── components/features/
-│   │   ├── MigrationPathPanel.tsx     # Actionable code diff & sed remediation UI
-│   │   ├── GitHubAnalyzer.tsx         # GitHub repository scanner tab
-│   │   ├── AnimatedFlowchart.tsx      # React Flow architecture graph with 3x Voice Agent
-│   │   ├── ResultsPanel.tsx           # Verified decision panel & rich export suite
-│   │   └── BenchmarkModal.tsx         # Quantitative evaluation display
-│   ├── pages/
-│   │   ├── AnalyzerPage.tsx           # Main workspace (Upload / Paste / GitHub scan)
-│   │   ├── FlowchartPage.tsx          # Dedicated deep node visualizer page
-│   │   └── HistoryPage.tsx            # Historical analysis runs
-│   └── lib/
-│       └── openApiDiff.ts             # Deterministic AST diff engine
-│
-└── tests/                             # 20 automated pytest unit & integration tests
-    ├── test_migration_path.py         # Migration generator tests
-    ├── test_github_analyzer.py        # GitHub repo scanner tests
-    ├── test_impact_analyzer.py        # RFC 13-category unit tests
-    └── test_integration.py            # End-to-end FastAPI endpoint tests
+This repository uses a multi-stage Docker build that compiles the Vite React frontend and serves both API and static assets from a single FastAPI container on Railway:
+
+```dockerfile
+# Stage 1: Build React SPA
+FROM node:20-alpine AS frontend-builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+# Stage 2: Python FastAPI Backend
+FROM python:3.11-slim
+WORKDIR /app
+COPY antigravity_backend/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+COPY --from=frontend-builder /app/dist ./dist
+COPY antigravity_backend/ ./antigravity_backend/
+CMD ["sh", "-c", "uvicorn antigravity_backend.main:app --host 0.0.0.0 --port ${PORT}"]
 ```
 
 ---

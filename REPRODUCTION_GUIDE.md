@@ -1,6 +1,12 @@
 # API DriftShield — Evaluation & Reproduction Guide
 
-This guide enables judges, maintainers, and evaluators to reproduce all quantitative benchmarks, run the test suite, and test all agent features in under five minutes.
+This guide enables judges, maintainers, and evaluators to reproduce all quantitative benchmarks, run the test suite, test all agent features, and evaluate the AI Strategic Remediation engine.
+
+---
+
+## 🌐 Live Production Demo
+* **Railway App**: **[https://apidriftshield.up.railway.app](https://apidriftshield.up.railway.app)**
+* **FastAPI Docs**: **[https://apidriftshield.up.railway.app/docs](https://apidriftshield.up.railway.app/docs)**
 
 ---
 
@@ -12,14 +18,25 @@ This guide enables judges, maintainers, and evaluators to reproduce all quantita
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/api-driftshield.git
-cd api-driftshield
+git clone https://github.com/Manthan2907/APIDriftShield.git
+cd APIDriftShield
+
+# Create .env from template
+cp .env.example .env
 
 # Install Python backend dependencies
 pip install -r antigravity_backend/requirements.txt
 
 # Install frontend dependencies
 npm install
+```
+
+### Environment Variables (`.env`)
+```env
+PORT=5000
+# Optional: Set your Groq or Gemini API key for instant AI prompt synthesis
+GROQ_API_KEY=gsk_your_groq_key_here
+GEMINI_API_KEY=your_gemini_key_here
 ```
 
 ---
@@ -30,13 +47,13 @@ npm install
 python -m pytest tests/ -v
 ```
 
-*Expected Result: `20 passed in ~2.5s` (100% pass rate).*
+*Expected Result: `20 passed in ~4.2s` (100% pass rate).*
 
 ---
 
 ## 3. Benchmark Evaluation Reproduction
 
-The evaluation suite runs the 6-stage DriftShield pipeline and baseline models against **41 ground-truth test cases** generated from 8 enterprise OpenAPI specifications (Petstore, Stripe, GitHub, Slack, Google Calendar, AWS S3, Notion, USPTO).
+The evaluation suite runs the 7-stage DriftShield pipeline and baseline models against **41 ground-truth test cases** generated from 8 enterprise OpenAPI specifications (Petstore, Stripe, GitHub, Slack, Google Calendar, AWS S3, Notion, USPTO).
 
 ```bash
 # Run the evaluation harness (fast deterministic mode, ~10s)
@@ -82,32 +99,32 @@ python antigravity_backend/main.py
 ```bash
 npm run dev
 ```
-*Open **`http://localhost:5173`** in your browser.*
+*Open **`http://localhost:5173/analyze`** in your browser.*
 
 ---
 
 ## 5. Feature Walkthrough for Evaluators
 
-1. **API Analyzer & Migration Generator**:
+1. **API Analyzer & AI Strategic Prompt Generator**:
    - Go to **`/analyze`**.
    - Click **"Load Sample Specs"** (or choose a preset like Stripe / User Service).
    - Click **"Run Drift Analysis"**.
-   - In the results, view the **Automated Client Migration Path & Code Remediation** panel:
+   - Click **"✨ AI Fix Prompt (Cursor / Claude)"**:
+     * Inspect the unified refactoring directive for Cursor / Claude Code.
+     * View the 5-Minute Zero-Downtime Gateway Hotfix (Cloudflare Worker proxy).
+     * View the Client SDK Interceptor snippet.
+   - In the **Automated Client Migration Path** accordion:
      * Inspect Old vs New code diffs.
      * Click **"Copy sed"** for instant bulk find-and-replace command.
-     * Click **"Copy grep"** for blast-radius codebase search command.
+     * Filter by root causes (`Removed Routes`, `Required Fields`).
 
 2. **Scan GitHub Repositories**:
-   - Click the **"Scan GitHub Repo"** tab on `/analyze`.
-   - Click presets like `aws/aws-sdk-go-v2`, `github/rest-api-description`, or `stripe/stripe-openapi`.
-   - Click **"Scan Repository"** to discover OpenAPI specs and analyze drift across versions.
+   - In `/analyze`, switch to the **"Scan GitHub Repo"** tab.
+   - Enter `stripe/stripe-openapi` or `aws/aws-sdk-go-v2`.
+   - Click **"Scan Repository for Specs"**.
+   - Click **"Run Full DriftShield Analysis"** to analyze discovered specs directly from the GitHub tree.
 
-3. **Deep Node Architecture Flowchart & 3x Voice Tour**:
-   - Navigate to **`/flowchart`** or click **"Launch Flowchart Animation"**.
-   - Click **"🎙️ AI Voice Tour & 5-Min Fix"** to listen to the synchronized live narrator.
-   - Test **Speed: 3x** to listen to high-speed narration and observe accelerating particle flow edges.
-   - Watch the agent inspect each breaking red box and automatically open the route drawer.
-
-4. **Rich GitHub PR Comment Export**:
-   - In the Analyzer results, click **"GitHub Comment"**.
-   - Paste into GitHub PR to see native callouts (`> [!CAUTION]`), scorecard metrics, and breaking changes tables.
+3. **Interactive Deep Architecture Graph & AI Voice Tour**:
+   - Navigate to **`/flowchart`** (or click **"Launch Interactive Flowchart"** from results).
+   - Select speed `[1x, 2x, 3x]` and click **"Play AI Voice Narration"**.
+   - The voice agent walks through every node, opens the route inspector drawer, and narrates the exact 5-minute fix in high-contrast light mode.

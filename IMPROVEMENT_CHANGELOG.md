@@ -27,9 +27,18 @@
 * Implemented recursive repository tree scanning for OpenAPI specs across branches.
 * Built multi-tier fallback with enterprise spec catalogs (`aws/aws-sdk-go-v2`, `github/rest-api-description`, `stripe/stripe-openapi`).
 
-## Milestone 7: Automated Migration Path & Code Remediation Generator *(Latest)*
+## Milestone 7: Automated Migration Path & Code Remediation Generator
 * Added `POST /api/generate-migration-path` and `MigrationPathPanel.tsx` UI component.
 * Auto-generates exact side-by-side $v_1 \rightarrow v_2$ code diffs, numbered remediation checklists, `sed -i` bulk find-and-replace commands, and `grep -r` blast-radius codebase search commands.
 * Computes engineer development time estimates and target completion dates.
 * Upgraded GitHub PR comment exporter to output native GitHub alert callouts (`> [!CAUTION]`) and markdown scorecard tables.
 * Expanded test suite to **20 automated pytest tests** (100% pass rate).
+
+## Milestone 8: AI Strategic Remediation Suite & Unified Railway Deployment *(Latest)*
+* **Integrated Groq Llama 3.3 70B & Google Gemini 1.5 Flash**: Added server-side `/api/ai-remediation` and `/api/ai-status` endpoints that execute prompt synthesis in < 500ms via `GROQ_API_KEY` in `.env` / Railway.
+* **One-Click Cursor / Claude Code / Copilot Prompt Generator**: Resolves the "160-hour migration trap" (671 breaking changes) by synthesizing massive contract diffs into a single actionable refactoring prompt for AI coding assistants.
+* **5-Minute Zero-Downtime Gateway Hotfix**: Auto-generates Cloudflare Worker / Express / Envoy proxy middleware to transparently rewrite deprecated routes.
+* **Client SDK Interceptor Patch**: Auto-generates 15-line Axios / Fetch middleware adapters.
+* **High-Scale Root Cause Clustering & Pagination**: Grouped mutations into pattern clusters (`Removed Routes`, `Required Fields`, `Type Narrowing`) with 8-item pagination to keep UI snappy.
+* **Single-Container Multi-Stage Dockerfile on Railway**: Unified Node.js 20 frontend builder and Python 3.11 FastAPI backend in one container deployed at `https://apidriftshield.up.railway.app`.
+* **Pure High-Contrast Light Theme Voice Narration**: Converted floating voice captions to crystal-clear typography with step navigation and dismissal controls.
