@@ -28,7 +28,8 @@ import {
   Radio,
   XCircle,
   FileCode,
-  Sparkles
+  Sparkles,
+  Smartphone
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
