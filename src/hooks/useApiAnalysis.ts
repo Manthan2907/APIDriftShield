@@ -157,7 +157,7 @@ export function useApiAnalysis() {
     setJsonError(null);
   }, []);
 
-  return { stage, stageMessage, stageStep, isLoading, progress, result, jsonError, analyze, reset };
+  return { stage, stageMessage, stageStep, isLoading, progress, result, setResult, jsonError, analyze, reset };
 }
 
 function loggerInfoToast(msg: string) {
