@@ -10,6 +10,8 @@ import AnalyzerPage from "./pages/AnalyzerPage";
 import FlowchartPage from "./pages/FlowchartPage";
 import HistoryPage from "./pages/HistoryPage";
 import DocsPage from "./pages/DocsPage";
+import ReleaseReadinessPage from "./pages/ReleaseReadinessPage";
+import StabilityDashboardPage from "./pages/StabilityDashboardPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +30,8 @@ const App = () => (
             <Route path="/flowchart" element={<FlowchartPage />} />
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/docs" element={<DocsPage />} />
+            <Route path="/release-readiness" element={<ReleaseReadinessPage />} />
+            <Route path="/stability" element={<StabilityDashboardPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
