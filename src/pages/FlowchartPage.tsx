@@ -21,8 +21,8 @@ import { toast } from "sonner";
 export default function FlowchartPage() {
   const location = useLocation();
 
-  // Retrieve analysis result ONLY if passed from an actual analysis run or history
-  const [result, setResult] = useState<AnalysisResult | null>(() => {
+  // Retrieve analysis result or default to sample demo so flowchart is always visible immediately
+  const [result, setResult] = useState<AnalysisResult>(() => {
     if (location.state?.result) {
       return location.state.result;
     }
@@ -30,7 +30,7 @@ export default function FlowchartPage() {
     if (history.length > 0 && history[0].result) {
       return history[0].result;
     }
-    return null;
+    return analyzeSpecs(SAMPLE_V1_SPEC, SAMPLE_V2_SPEC, "v1_production.json", "v2_release.json");
   });
 
   const [copiedMermaid, setCopiedMermaid] = useState(false);

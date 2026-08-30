@@ -874,6 +874,7 @@ function FlowchartInner({ result }: AnimatedFlowchartProps) {
         nodesDraggable={true}
         nodesConnectable={false}
         elementsSelectable={true}
+        style={{ width: "100%", height: "100%" }}
       >
         <Background color="#cbd5e1" gap={16} size={1} />
         <Controls className="bg-white border border-slate-200 fill-slate-700 text-slate-700 shadow-md rounded-xl overflow-hidden" />
