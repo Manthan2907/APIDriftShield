@@ -18,6 +18,13 @@ if hasattr(sys.stdout, "reconfigure"):
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
+import requests
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 sys.path.insert(0, os.path.dirname(__file__))
 
 from fastapi import FastAPI, Request, Response, HTTPException, Query, status
@@ -624,75 +631,79 @@ async def ai_remediation_endpoint(payload: AiRemediationRequest):
         groq_key = os.environ.get("GROQ_API_KEY")
         gemini_key = os.environ.get("GEMINI_API_KEY")
 
-    # 1. Try Server Groq Llama 3.3 70B
+    # 1. Try Server Groq
     if groq_key:
-        try:
-            prompt_summary = f"OpenAPI Drift: {len(breaking)} breaking changes ({payload.v1_name} -> {payload.v2_name}). Top mutations: {json.dumps(breaking[:15])}"
-            groq_res = requests.post(
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {groq_key}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "model": "llama-3.3-70b-versatile",
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": "You are DriftShield's Principal API Architect. Provide concise, ultra-actionable AI coding agent directives for Cursor, Claude Code, and Copilot to refactor client codebases against massive breaking contract changes."
-                        },
-                        {
-                            "role": "user",
-                            "content": f"Generate a comprehensive, single-pass refactoring prompt for {target} to fix these {len(breaking)} breaking changes:\n{prompt_summary}"
+        groq_models = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b", "groq/compound"]
+        prompt_summary = f"OpenAPI Drift: {len(breaking)} breaking changes ({payload.v1_name} -> {payload.v2_name}). Top mutations: {json.dumps(breaking[:15])}"
+        for g_model in groq_models:
+            try:
+                groq_res = requests.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {groq_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": g_model,
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "You are DriftShield's Principal API Architect. Provide concise, ultra-actionable AI coding agent directives for Cursor, Claude Code, and Copilot to refactor client codebases against massive breaking contract changes."
+                            },
+                            {
+                                "role": "user",
+                                "content": f"Generate a comprehensive, single-pass refactoring prompt for {target} to fix these {len(breaking)} breaking changes:\n{prompt_summary}"
+                            }
+                        ],
+                        "temperature": 0.2,
+                        "max_tokens": 1500
+                    },
+                    timeout=12
+                )
+                if groq_res.status_code == 200:
+                    data = groq_res.json()
+                    reply = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+                    if reply:
+                        return {
+                            "success": True,
+                            "provider_used": "groq",
+                            "model": g_model,
+                            "server_key_used": bool(os.environ.get("GROQ_API_KEY")),
+                            "prompt": reply
                         }
-                    ],
-                    "temperature": 0.2,
-                    "max_tokens": 1500
-                },
-                timeout=12
-            )
-            if groq_res.status_code == 200:
-                data = groq_res.json()
-                reply = data.get("choices", [{}])[0].get("message", {}).get("content", "")
-                if reply:
-                    return {
-                        "success": True,
-                        "provider_used": "groq",
-                        "model": "llama-3.3-70b-versatile",
-                        "server_key_used": bool(os.environ.get("GROQ_API_KEY")),
-                        "prompt": reply
-                    }
-        except Exception as e:
-            logger.warning(f"Server Groq call error: {e}")
+            except Exception as e:
+                logger.warning(f"Server Groq {g_model} call error: {e}")
 
-    # 2. Try Server Gemini 1.5 Flash
+    # 2. Try Server Gemini
     if gemini_key:
-        try:
-            gemini_res = requests.post(
-                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}",
-                headers={"Content-Type": "application/json"},
-                json={
-                    "contents": [{
-                        "parts": [{
-                            "text": f"You are DriftShield Principal API Architect. Generate an actionable refactoring prompt for {target} to fix {len(breaking)} breaking changes ({payload.v1_name} -> {payload.v2_name}):\n{json.dumps(breaking[:15])}"
+        gemini_models = ["gemini-3-flash-preview", "gemini-flash-latest", "gemini-2.5-flash", "gemini-1.5-flash"]
+        for gm_model in gemini_models:
+            try:
+                gemini_res = requests.post(
+                    f"https://generativelanguage.googleapis.com/v1beta/models/{gm_model}:generateContent?key={gemini_key}",
+                    headers={"Content-Type": "application/json"},
+                    json={
+                        "contents": [{
+                            "parts": [{
+                                "text": f"You are DriftShield Principal API Architect. Generate an actionable refactoring prompt for {target} to fix {len(breaking)} breaking changes ({payload.v1_name} -> {payload.v2_name}):\n{json.dumps(breaking[:15])}"
+                            }]
                         }]
-                    }]
-                },
-                timeout=12
-            )
-            if gemini_res.status_code == 200:
-                data = gemini_res.json()
-                reply = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-                if reply:
-                    return {
-                        "success": True,
-                        "provider_used": "gemini",
-                        "model": "gemini-1.5-flash",
-                        "server_key_used": bool(os.environ.get("GEMINI_API_KEY")),
-                        "prompt": reply
-                    }
-        except Exception as e:
-            logger.warning(f"Server Gemini call error: {e}")
+                    },
+                    timeout=12
+                )
+                if gemini_res.status_code == 200:
+                    data = gemini_res.json()
+                    reply = data.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+                    if reply:
+                        return {
+                            "success": True,
+                            "provider_used": "gemini",
+                            "model": gm_model,
+                            "server_key_used": bool(os.environ.get("GEMINI_API_KEY")),
+                            "prompt": reply
+                        }
+            except Exception as e:
+                logger.warning(f"Server Gemini {gm_model} call error: {e}")
 
     # 3. Smart Offline Synthesizer
     sample_removed = [f"- {c.get('route', c.get('path', '/resource'))} ({c.get('method', 'GET')})" for c in breaking if "removed" in c.get("type", "").lower() or "removed" in c.get("title", "").lower()]
@@ -983,7 +994,7 @@ Return ONLY valid JSON (no markdown, no explanation):
 }}"""
 
     def _enrich_with_local(ai_data: Dict) -> Dict:
-        """Add chart_data, risk_dimensions, timeline that AI doesn't generate."""
+        """Add chart_data, risk_dimensions, timeline, robust mitigations, and board points."""
         local = _compute_liability_local(payload)
         ai_data["chart_data"] = local["chart_data"]
         ai_data["risk_dimensions"] = local["risk_dimensions"]
@@ -1004,60 +1015,90 @@ Return ONLY valid JSON (no markdown, no explanation):
             {"name": "Reputation Risk", "value": ai_data.get("reputation_risk", 0), "color": "#be123c"},
             {"name": "Opportunity Cost", "value": ai_data.get("opportunity_cost", 0), "color": "#ea580c"},
         ]
+        # Guarantee at least 4 detailed mitigation strategies
+        ai_mitigations = ai_data.get("mitigations", [])
+        if not ai_mitigations or len(ai_mitigations) < 3:
+            ai_data["mitigations"] = local["mitigations"]
+        else:
+            # Ensure every mitigation has ROI, hours, priority
+            for m in ai_mitigations:
+                if not m.get("roi") and m.get("implementation_cost") and m.get("savings"):
+                    m["roi"] = round(m["savings"] / max(m["implementation_cost"], 1), 1)
+                if not m.get("time_hours"):
+                    m["time_hours"] = 20
+                if not m.get("priority"):
+                    m["priority"] = "high"
+
+        # Guarantee board talking points
+        ai_points = ai_data.get("board_talking_points", [])
+        if not ai_points or len(ai_points) < 3:
+            ai_data["board_talking_points"] = local["board_talking_points"]
+
+        # Guarantee scenarios
+        if not ai_data.get("scenarios") or not ai_data["scenarios"].get("likely_case"):
+            tot = ai_data.get("total_liability") or local["total_liability"]
+            ai_data["scenarios"] = {
+                "best_case": round(tot * 0.5),
+                "likely_case": round(tot),
+                "worst_case": round(tot * 1.8),
+            }
         return ai_data
 
     # 1. Try Groq
     if groq_key:
-        try:
-            groq_res = http_requests.post(
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
-                json={
-                    "model": "llama-3.3-70b-versatile",
-                    "messages": [
-                        {"role": "system", "content": "You are a senior financial analyst. Always respond with valid JSON only."},
-                        {"role": "user", "content": financial_prompt}
-                    ],
-                    "temperature": 0.1,
-                    "max_tokens": 2000
-                },
-                timeout=15
-            )
-            if groq_res.status_code == 200:
-                content = groq_res.json().get("choices", [{}])[0].get("message", {}).get("content", "")
-                # Strip markdown code fences if present
-                content = content.strip()
-                if content.startswith("```"):
-                    content = content.split("```")[1]
-                    if content.startswith("json"):
-                        content = content[4:]
-                ai_data = json.loads(content)
-                ai_data = _enrich_with_local(ai_data)
-                return {"success": True, "provider_used": "groq", **ai_data}
-        except Exception as e:
-            logger.warning(f"Groq liability call failed: {e}")
+        groq_models = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b", "groq/compound"]
+        for g_model in groq_models:
+            try:
+                groq_res = http_requests.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
+                    json={
+                        "model": g_model,
+                        "messages": [
+                            {"role": "system", "content": "You are a senior financial analyst. Always respond with valid JSON only."},
+                            {"role": "user", "content": financial_prompt}
+                        ],
+                        "temperature": 0.1,
+                        "max_tokens": 2000
+                    },
+                    timeout=15
+                )
+                if groq_res.status_code == 200:
+                    content = groq_res.json().get("choices", [{}])[0].get("message", {}).get("content", "")
+                    content = content.strip()
+                    if content.startswith("```"):
+                        content = content.split("```")[1]
+                        if content.startswith("json"):
+                            content = content[4:]
+                    ai_data = json.loads(content)
+                    ai_data = _enrich_with_local(ai_data)
+                    return {"success": True, "provider_used": f"groq ({g_model})", **ai_data}
+            except Exception as e:
+                logger.warning(f"Groq {g_model} liability call failed: {e}")
 
     # 2. Try Gemini
     if gemini_key:
-        try:
-            gemini_res = http_requests.post(
-                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}",
-                headers={"Content-Type": "application/json"},
-                json={"contents": [{"parts": [{"text": financial_prompt}]}]},
-                timeout=15
-            )
-            if gemini_res.status_code == 200:
-                content = gemini_res.json().get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-                content = content.strip()
-                if content.startswith("```"):
-                    content = content.split("```")[1]
-                    if content.startswith("json"):
-                        content = content[4:]
-                ai_data = json.loads(content)
-                ai_data = _enrich_with_local(ai_data)
-                return {"success": True, "provider_used": "gemini", **ai_data}
-        except Exception as e:
-            logger.warning(f"Gemini liability call failed: {e}")
+        gemini_models = ["gemini-3-flash-preview", "gemini-flash-latest", "gemini-2.5-flash", "gemini-1.5-flash"]
+        for gm_model in gemini_models:
+            try:
+                gemini_res = http_requests.post(
+                    f"https://generativelanguage.googleapis.com/v1beta/models/{gm_model}:generateContent?key={gemini_key}",
+                    headers={"Content-Type": "application/json"},
+                    json={"contents": [{"parts": [{"text": financial_prompt}]}]},
+                    timeout=15
+                )
+                if gemini_res.status_code == 200:
+                    content = gemini_res.json().get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+                    content = content.strip()
+                    if content.startswith("```"):
+                        content = content.split("```")[1]
+                        if content.startswith("json"):
+                            content = content[4:]
+                    ai_data = json.loads(content)
+                    ai_data = _enrich_with_local(ai_data)
+                    return {"success": True, "provider_used": f"gemini ({gm_model})", **ai_data}
+            except Exception as e:
+                logger.warning(f"Gemini {gm_model} liability call failed: {e}")
 
     # 3. Full local deterministic fallback
     local_result = _compute_liability_local(payload)
