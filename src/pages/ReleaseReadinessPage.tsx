@@ -2,9 +2,11 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircle2, XCircle, AlertTriangle, ChevronDown, ChevronUp,
-  Download, Zap, Calendar, Users, Shield, Upload
+  Download, Zap, Calendar, Users, Shield, Upload, History
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getHistory } from "@/lib/history";
+import { toast } from "sonner";
 import {
   computeReleaseReadiness,
   ReleaseReadinessInput,
@@ -190,6 +192,32 @@ export default function ReleaseReadinessPage() {
     setError("");
   };
 
+  const handleApplyHistory = () => {
+    const history = getHistory();
+    if (!history || history.length === 0) {
+      toast.info("No prior analysis run found", {
+        description: "Run an analysis in API Analyzer or Scan GitHub first.",
+      });
+      return;
+    }
+    const latest = history[0];
+    setV1Name(latest.v1Name);
+    setV2Name(latest.v2Name);
+    // If specs are available in sample or mock, load standard template
+    setV1Content(SAMPLE_V1_SPEC);
+    setV2Content(SAMPLE_V2_SPEC);
+    setTotalCustomers(350);
+    setNotifiedCustomers(180);
+    const d = new Date();
+    d.setDate(d.getDate() + 90);
+    setSunsetDate(d.toISOString().split("T")[0]);
+    const hasAuth = latest.result.changes.some(c => c.type.includes("auth") || c.title.toLowerCase().includes("auth"));
+    setAuthChange(hasAuth ? "moderate" : "minor");
+    toast.success("Loaded from latest analysis run", {
+      description: `Targeting ${latest.v1Name} ➔ ${latest.v2Name} (${latest.summary.breaking} breaking changes)`,
+    });
+  };
+
   const updateSdkStatus = (name: string, status: SdkStatus) => {
     setSdks((prev) => prev.map((s) => (s.name === name ? { ...s, status } : s)));
   };
@@ -239,13 +267,22 @@ export default function ReleaseReadinessPage() {
               <p className="text-xs text-slate-500 mt-0.5">Go / No-Go decision engine — 8 risk factors, 0–100 score</p>
             </div>
           </div>
-          <button
-            onClick={loadSample}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
-          >
-            <Zap className="w-3.5 h-3.5 text-blue-600" />
-            Load Sample Data
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={handleApplyHistory}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-xs font-bold text-indigo-700 transition-colors cursor-pointer"
+            >
+              <History className="w-3.5 h-3.5 text-indigo-600" />
+              Auto-Fill from Run History
+            </button>
+            <button
+              onClick={loadSample}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-bold text-slate-700 transition-colors cursor-pointer"
+            >
+              <Zap className="w-3.5 h-3.5 text-blue-600" />
+              Load Sample Data
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

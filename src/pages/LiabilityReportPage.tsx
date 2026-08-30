@@ -107,6 +107,10 @@ const CurrencyTooltip = ({ active, payload, label }: any) => {
 
 // ─── Input Form ───────────────────────────────────────────────────────────────
 
+import { getHistory } from "@/lib/history";
+import { Link } from "react-router-dom";
+import { Sparkles, History, Github } from "lucide-react";
+
 interface FormState {
   api_name: string;
   v1_name: string;
@@ -123,7 +127,7 @@ interface FormState {
 }
 
 const DEFAULT_FORM: FormState = {
-  api_name: "My API",
+  api_name: "User & Payment API",
   v1_name: "v1.0",
   v2_name: "v2.0",
   total_breaking_changes: "3",
@@ -137,6 +141,42 @@ const DEFAULT_FORM: FormState = {
   auth_change_severity: "none",
 };
 
+const PRESETS = {
+  saas: {
+    label: "SaaS Scale ($20k ARR)",
+    api_name: "Stripe-Style Payments API",
+    total_breaking_changes: "3",
+    total_customers: "500",
+    avg_customer_arr: "20000",
+    historical_churn_rate: "2.5",
+    enterprise_customer_count: "35",
+    enterprise_avg_arr: "100000",
+    auth_change_severity: "minor" as const,
+  },
+  fintech: {
+    label: "Enterprise FinTech ($100k ARR)",
+    api_name: "Core Banking Ledger API",
+    total_breaking_changes: "4",
+    total_customers: "120",
+    avg_customer_arr: "100000",
+    historical_churn_rate: "1.8",
+    enterprise_customer_count: "60",
+    enterprise_avg_arr: "250000",
+    auth_change_severity: "moderate" as const,
+  },
+  developer: {
+    label: "Public Dev Platform ($5k ARR)",
+    api_name: "Cloud Infrastructure API",
+    total_breaking_changes: "2",
+    total_customers: "2500",
+    avg_customer_arr: "5000",
+    historical_churn_rate: "3.2",
+    enterprise_customer_count: "15",
+    enterprise_avg_arr: "50000",
+    auth_change_severity: "none" as const,
+  },
+};
+
 function InputForm({
   form,
   onChange,
@@ -148,6 +188,35 @@ function InputForm({
   onSubmit: () => void;
   isLoading: boolean;
 }) {
+  const history = getHistory();
+  const latestRun = history.length > 0 ? history[0] : null;
+
+  const handleApplyHistory = () => {
+    if (!latestRun) {
+      toast.info("No prior analysis run found", {
+        description: "Run an analysis in API Analyzer or Scan GitHub first.",
+      });
+      return;
+    }
+    const breaking = latestRun.summary.breaking;
+    const authChange = latestRun.result.changes.some((c) =>
+      c.type.includes("auth") || c.title.toLowerCase().includes("auth")
+    )
+      ? ("moderate" as const)
+      : ("none" as const);
+
+    onChange({
+      api_name: `${latestRun.v1Name.replace(/\.[^/.]+$/, "")} API`,
+      v1_name: latestRun.v1Name,
+      v2_name: latestRun.v2Name,
+      total_breaking_changes: String(breaking),
+      auth_change_severity: authChange,
+    });
+    toast.success("Auto-filled from latest run analysis", {
+      description: `Loaded ${breaking} breaking changes from ${latestRun.v1Name} ➔ ${latestRun.v2Name}`,
+    });
+  };
+
   const field = (
     id: keyof FormState,
     label: string,
@@ -189,8 +258,50 @@ function InputForm({
           Financial Input Parameters
         </h2>
         <p className="text-[11px] text-slate-500">
-          Provide customer and API metadata to calculate financial exposure.
+          Auto-fill from your recent spec scan or choose an industry preset.
         </p>
+      </div>
+
+      {/* 1-Click Loaders / Presets */}
+      <div className="space-y-2 pb-4 border-b border-slate-100">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest flex items-center gap-1">
+            <Sparkles className="w-3 h-3 text-amber-500" />
+            <span>1-Click Presets</span>
+          </span>
+          {latestRun && (
+            <button
+              onClick={handleApplyHistory}
+              className="text-[11px] font-extrabold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
+            >
+              <History className="w-3 h-3" />
+              <span>Auto-Fill from Run</span>
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 gap-1.5">
+          {Object.entries(PRESETS).map(([key, preset]) => (
+            <button
+              key={key}
+              onClick={() => onChange(preset)}
+              className="text-left px-3 py-2 rounded-xl text-[11px] font-bold border border-slate-200 hover:border-indigo-300 bg-slate-50 hover:bg-indigo-50/40 text-slate-700 transition-all flex items-center justify-between cursor-pointer"
+            >
+              <span>{preset.label}</span>
+              <span className="text-[10px] font-mono text-slate-400">Apply</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="pt-2">
+          <Link
+            to="/analyze"
+            className="text-[11px] font-semibold text-slate-600 hover:text-blue-600 flex items-center gap-1.5 justify-center py-1.5 rounded-xl border border-dashed border-slate-300 hover:border-blue-400 transition-all"
+          >
+            <Github className="w-3.5 h-3.5" />
+            <span>Scan GitHub Repo for New Specs ➔</span>
+          </Link>
+        </div>
       </div>
 
       {/* API Info */}
