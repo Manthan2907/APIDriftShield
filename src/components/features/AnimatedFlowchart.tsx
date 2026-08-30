@@ -77,89 +77,104 @@ function buildNodesAndEdges(
   const totalBreaking = result.summary.breaking;
   const isBlocked = totalBreaking > 0;
 
-  // Node 1: Client Applications
+  // Node 1: Upstream Client Apps
   newNodes.push({
     id: "client-apps",
     data: {
       label: (
         <div className="text-left font-sans">
-          <div className="text-[10px] uppercase font-extrabold tracking-wider text-sky-700">Upstream</div>
-          <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5 mt-0.5">
-            👥 Client Consumers
+          <div className="text-[10px] uppercase font-bold text-sky-800 tracking-wider mb-1 font-mono">
+            LAYER 01 &bull; CLIENTS
           </div>
-          <div className="text-[11px] text-slate-500 mt-0.5">Web, Mobile &amp; SDKs</div>
+          <div className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
+            <Smartphone className="w-3.5 h-3.5 text-sky-700" />
+            <span>Upstream Consumers</span>
+          </div>
+          <div className="text-[11px] text-slate-600 mt-1 leading-tight">
+            Web, iOS, Android &amp; SDKs
+          </div>
         </div>
       )
     },
-    position: { x: 30, y: 160 },
+    position: { x: 20, y: 130 },
     sourcePosition: Position.Right,
     style: {
       background: isNodeHighlighted("client-apps") ? "#e0f2fe" : "#ffffff",
       border: isNodeHighlighted("client-apps") ? "3px solid #0284c7" : "2px solid #0284c7",
       borderRadius: "14px",
-      padding: "14px 18px",
+      padding: "12px 14px",
       boxShadow: isNodeHighlighted("client-apps")
         ? "0 0 25px rgba(2, 132, 199, 0.4)"
-        : "0 4px 16px rgba(2, 132, 199, 0.12)",
-      width: 180
+        : "0 4px 16px rgba(2, 132, 199, 0.1)",
+      width: 170
     }
   });
 
-  // Node 2: Gateway Layer
+  // Node 2: API Gateway & Auth Ingress
   newNodes.push({
     id: "api-gateway",
     data: {
       label: (
         <div className="text-left font-sans">
-          <div className="text-[10px] uppercase font-extrabold tracking-wider text-indigo-700">Ingress</div>
-          <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5 mt-0.5">
-            ⚡ API Gateway
+          <div className="text-[10px] uppercase font-bold text-indigo-800 tracking-wider mb-1 font-mono">
+            LAYER 02 &bull; GATEWAY
           </div>
-          <div className="text-[11px] text-slate-500 mt-0.5">Routing &amp; Auth Dispatch</div>
+          <div className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
+            <Globe className="w-3.5 h-3.5 text-indigo-700" />
+            <span>API Gateway &amp; Ingress</span>
+          </div>
+          <div className="text-[11px] text-slate-600 mt-1 leading-tight">
+            Auth, Rate Limits &amp; Proxies
+          </div>
         </div>
       )
     },
-    position: { x: 260, y: 160 },
+    position: { x: 225, y: 130 },
     sourcePosition: Position.Right,
     targetPosition: Position.Left,
     style: {
-      background: isNodeHighlighted("api-gateway") ? "#eef2ff" : "#ffffff",
+      background: isNodeHighlighted("api-gateway") ? "#ede9fe" : "#ffffff",
       border: isNodeHighlighted("api-gateway") ? "3px solid #6366f1" : "2px solid #6366f1",
       borderRadius: "14px",
-      padding: "14px 18px",
+      padding: "12px 14px",
       boxShadow: isNodeHighlighted("api-gateway")
         ? "0 0 25px rgba(99, 102, 241, 0.4)"
-        : "0 4px 16px rgba(99, 102, 241, 0.12)",
-      width: 180
+        : "0 4px 16px rgba(99, 102, 241, 0.1)",
+      width: 175
     }
   });
 
-  // Node 3: DriftShield AST Engine
+  // Node 3: Drift Engine AST Parser
   newNodes.push({
     id: "drift-engine",
     data: {
       label: (
         <div className="text-left font-sans">
-          <div className="text-[10px] uppercase font-extrabold tracking-wider text-cyan-800">Deterministic Engine</div>
-          <div className="text-sm font-bold text-slate-900 flex items-center gap-1.5 mt-0.5">
-            🔍 Spec AST Diff
+          <div className="text-[10px] uppercase font-bold text-cyan-800 tracking-wider mb-1 font-mono">
+            DETERMINISTIC ENGINE
           </div>
-          <div className="text-[11px] text-slate-500 mt-0.5">13 RFC Rules Enforced</div>
+          <div className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
+            <Cpu className="w-3.5 h-3.5 text-cyan-700" />
+            <span>OpenAPI Spec AST Diff</span>
+          </div>
+          <div className="text-[11px] text-slate-600 mt-1 leading-tight">
+            13 Strict RFC Rules Enforced
+          </div>
         </div>
       )
     },
-    position: { x: 490, y: 160 },
+    position: { x: 435, y: 130 },
     sourcePosition: Position.Right,
     targetPosition: Position.Left,
     style: {
       background: isNodeHighlighted("drift-engine") ? "#cffafe" : "#ffffff",
       border: isNodeHighlighted("drift-engine") ? "3px solid #06b6d4" : "2px solid #06b6d4",
       borderRadius: "14px",
-      padding: "14px 18px",
+      padding: "12px 14px",
       boxShadow: isNodeHighlighted("drift-engine")
         ? "0 0 25px rgba(6, 182, 212, 0.4)"
         : "0 4px 16px rgba(6, 182, 212, 0.12)",
-      width: 190
+      width: 180
     }
   });
 
@@ -296,8 +311,8 @@ function buildNodesAndEdges(
   }
 
   // Position the clusters neatly
-  const clusterVerticalGap = 125;
-  const startY = Math.max(20, 180 - ((clusters.length - 1) * clusterVerticalGap) / 2);
+  const clusterVerticalGap = 120;
+  const startY = Math.max(10, 130 - ((clusters.length - 1) * clusterVerticalGap) / 2);
 
   clusters.forEach((cl, idx) => {
     const highlighted = isNodeHighlighted(cl.id);
@@ -307,7 +322,7 @@ function buildNodesAndEdges(
       data: {
         label: (
           <div className="text-left font-sans cursor-pointer group">
-            <div className="flex items-center justify-between gap-1 mb-1.5">
+            <div className="flex items-center justify-between gap-1 mb-1">
               <span
                 className={cn(
                   "text-[9px] uppercase font-extrabold px-2 py-0.5 rounded-full border font-mono",
@@ -316,33 +331,33 @@ function buildNodesAndEdges(
               >
                 {cl.badge}
               </span>
-              <span className="text-xs font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-300 font-mono shadow-sm">
+              <span className="text-[11px] font-bold text-slate-800 bg-white px-1.5 py-0.5 rounded border border-slate-300 font-mono shadow-xs">
                 {cl.count} {cl.count === 1 ? "Route" : "Routes"}
               </span>
             </div>
             <div className="text-xs font-extrabold text-slate-900 group-hover:text-indigo-600 transition-colors">
               {cl.title}
             </div>
-            <div className="text-[11px] text-slate-600 mt-0.5 leading-snug">{cl.desc}</div>
-            <div className="text-[10px] text-indigo-700 font-semibold mt-2 flex items-center gap-1">
+            <div className="text-[11px] text-slate-600 mt-0.5 leading-tight">{cl.desc}</div>
+            <div className="text-[10px] text-indigo-700 font-semibold mt-1.5 flex items-center gap-1">
               <span>Click to inspect {cl.count} routes</span>
               <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
             </div>
           </div>
         )
       },
-      position: { x: 740, y: startY + idx * clusterVerticalGap },
+      position: { x: 655, y: startY + idx * clusterVerticalGap },
       sourcePosition: Position.Right,
       targetPosition: Position.Left,
       style: {
         background: highlighted ? "#fee2e2" : cl.bg,
         border: highlighted ? `3px solid ${cl.border}` : `2px solid ${cl.border}`,
         borderRadius: "14px",
-        padding: "14px 16px",
+        padding: "12px 14px",
         boxShadow: highlighted
           ? `0 0 25px ${cl.color}`
           : "0 4px 16px rgba(0, 0, 0, 0.06)",
-        width: 220
+        width: 210
       }
     });
 
@@ -377,22 +392,22 @@ function buildNodesAndEdges(
 
   // Node 5: Shield Release Gate Decision
   const isGateHighlighted = isNodeHighlighted("shield-gate");
-  const gateX = 1040;
+  const gateX = 905;
 
   newNodes.push({
     id: "shield-gate",
     data: {
       label: (
         <div className="text-left font-sans text-white">
-          <div className="flex items-center gap-1.5 mb-1.5">
+          <div className="flex items-center gap-1.5 mb-1">
             {isBlocked ? (
-              <ShieldAlert className="w-5 h-5 text-white" />
+              <ShieldAlert className="w-4 h-4 text-white" />
             ) : (
-              <ShieldCheck className="w-5 h-5 text-white" />
+              <ShieldCheck className="w-4 h-4 text-white" />
             )}
             <span
               className={cn(
-                "text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-full border",
+                "text-[9px] uppercase font-extrabold px-2 py-0.5 rounded-full border",
                 isBlocked
                   ? "bg-red-800 text-white border-red-300"
                   : "bg-emerald-800 text-white border-emerald-300"
@@ -401,35 +416,39 @@ function buildNodesAndEdges(
               {isBlocked ? "RELEASE BLOCKED" : "RELEASE APPROVED"}
             </span>
           </div>
-          <div className="text-sm font-extrabold text-white mt-1">
+          <div className="text-xs font-extrabold text-white mt-1">
             {isBlocked
               ? `${totalBreaking} Incompatibilities Gated`
               : "✅ 100% Backwards-Compatible"}
           </div>
-          <div className="text-[11px] text-white/90 mt-1 flex items-center justify-between">
+          <div className="text-[10.5px] text-white/90 mt-1 flex items-center justify-between">
             <span>Benchmark F1:</span>
             <strong className="font-mono text-white">0.965 F1</strong>
           </div>
-          <div className="text-[11px] text-white/90 flex items-center justify-between">
+          <div className="text-[10.5px] text-white/90 flex items-center justify-between">
             <span>Claims Verified:</span>
             <strong className="font-mono text-white">0.0% Hallucinations</strong>
           </div>
         </div>
       )
     },
-    position: { x: gateX, y: 140 },
+    position: { x: gateX, y: 120 },
     targetPosition: Position.Left,
     style: {
-      background: isBlocked ? "#dc2626" : "#16a34a",
-      border: isGateHighlighted
-        ? isBlocked ? "3px solid #fecaca" : "3px solid #bbf7d0"
-        : isBlocked ? "3px solid #b91c1c" : "3px solid #15803d",
-      borderRadius: "16px",
-      padding: "16px 20px",
+      background: isBlocked
+        ? isGateHighlighted
+          ? "#991b1b"
+          : "#dc2626"
+        : isGateHighlighted
+        ? "#065f46"
+        : "#16a34a",
+      border: isGateHighlighted ? "3px solid #ffffff" : "2px solid rgba(255, 255, 255, 0.4)",
+      borderRadius: "14px",
+      padding: "12px 14px",
       boxShadow: isGateHighlighted
-        ? isBlocked ? "0 0 35px rgba(220, 38, 38, 0.7)" : "0 0 35px rgba(22, 163, 74, 0.7)"
-        : isBlocked ? "0 10px 25px rgba(220, 38, 38, 0.35)" : "0 10px 25px rgba(22, 163, 74, 0.35)",
-      width: 260
+        ? `0 0 35px ${isBlocked ? "#ef4444" : "#10b981"}`
+        : "0 8px 24px rgba(0, 0, 0, 0.15)",
+      width: 220
     }
   });
 
@@ -717,7 +736,7 @@ function FlowchartInner({ result }: AnimatedFlowchartProps) {
   };
 
   return (
-    <div className="relative w-full h-[640px] min-h-[550px] rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden shadow-md">
+    <div className="relative w-full h-[680px] min-h-[580px] rounded-3xl border border-slate-200 bg-slate-50 overflow-hidden shadow-md font-sans select-none">
       {/* Top Floating Controls Bar */}
       <div className="absolute top-4 left-4 z-20 flex items-center gap-2.5 bg-white/95 border border-slate-200 p-2 rounded-xl backdrop-blur-md shadow-md">
         {/* 🎙️ Voice Narrator Agent Button */}
@@ -735,7 +754,7 @@ function FlowchartInner({ result }: AnimatedFlowchartProps) {
         </button>
 
         <button
-          onClick={() => fitView({ padding: 0.2, duration: 400 })}
+          onClick={() => fitView({ padding: 0.28, duration: 400 })}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors shadow-sm cursor-pointer"
         >
           🎯 Center View
@@ -769,30 +788,30 @@ function FlowchartInner({ result }: AnimatedFlowchartProps) {
         </div>
       </div>
 
-      {/* 🎙️ Live Voice Subtitles & 5-Minute Fix Bar (at the bottom) */}
+      {/* 🎙️ Live Voice Subtitles & 5-Minute Fix Bar (cleanly centered at the bottom) */}
       <AnimatePresence>
         {isVoiceActive && (
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 30 }}
-            className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 max-w-2xl w-[94%] bg-white/95 border-2 border-indigo-200 p-5 rounded-2xl shadow-2xl backdrop-blur-md flex items-start gap-4 text-slate-900 font-sans"
+            exit={{ opacity: 0, y: 20 }}
+            className="absolute bottom-4 left-4 right-4 max-w-xl mx-auto z-30 bg-white/98 border-2 border-indigo-200 p-4 rounded-2xl shadow-2xl backdrop-blur-md flex items-start gap-3.5 text-slate-900 font-sans"
           >
-            <div className="p-3 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-200 flex-shrink-0 mt-0.5 shadow-sm">
-              <Bot className="w-6 h-6 animate-pulse" />
+            <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-200 flex-shrink-0 mt-0.5 shadow-xs">
+              <Bot className="w-5 h-5 animate-pulse" />
             </div>
             <div className="flex-1 min-w-0 space-y-2">
               <div className="flex items-center justify-between gap-2 flex-wrap pb-1.5 border-b border-slate-100">
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] uppercase font-mono font-extrabold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
+                  <span className="text-[10px] uppercase font-mono font-extrabold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
                     {voiceTourSteps[currentVoiceStep]?.title || "DriftShield AI Agent"}
                   </span>
                   <span className="text-xs text-emerald-700 font-bold flex items-center gap-1">
-                    <Radio className="w-3.5 h-3.5 text-emerald-600 animate-pulse" /> Live Voice
+                    <Radio className="w-3 h-3 text-emerald-600 animate-pulse" /> Live Voice
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">
+                  <span className="text-xs font-mono font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
                     Step {currentVoiceStep + 1} of {voiceTourSteps.length}
                   </span>
                   <button
@@ -810,7 +829,7 @@ function FlowchartInner({ result }: AnimatedFlowchartProps) {
                 </div>
               </div>
 
-              <p className="text-xs sm:text-sm text-slate-900 leading-relaxed font-sans font-semibold">
+              <p className="text-xs text-slate-900 leading-relaxed font-sans font-semibold max-h-24 overflow-y-auto">
                 {subtitles}
               </p>
 
@@ -822,17 +841,17 @@ function FlowchartInner({ result }: AnimatedFlowchartProps) {
                     disabled={currentVoiceStep === 0}
                     className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-40 text-xs text-slate-800 font-bold border border-slate-200 transition-colors cursor-pointer"
                   >
-                    ◀ Prev Step
+                    ◀ Prev
                   </button>
                   <button
                     onClick={handleNextStep}
                     className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-xs text-white font-bold transition-all shadow-sm cursor-pointer"
                   >
-                    {currentVoiceStep + 1 === voiceTourSteps.length ? "Finish Tour ✓" : "Next Step ▶"}
+                    {currentVoiceStep + 1 === voiceTourSteps.length ? "Finish Tour ✓" : "Next ▶"}
                   </button>
                 </div>
 
-                <div className="text-[11px] text-slate-500 font-medium hidden sm:block">
+                <div className="text-[11px] text-slate-500 font-medium">
                   Speed: <strong className="text-slate-800 font-bold">{speed}x</strong>
                 </div>
               </div>
@@ -849,7 +868,7 @@ function FlowchartInner({ result }: AnimatedFlowchartProps) {
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
         fitView
-        fitViewOptions={{ padding: 0.2 }}
+        fitViewOptions={{ padding: 0.28 }}
         minZoom={0.3}
         maxZoom={1.8}
         nodesDraggable={true}
