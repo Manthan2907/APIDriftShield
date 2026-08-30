@@ -5,7 +5,6 @@ import {
   Zap,
   ShieldCheck,
   Trophy,
-  Workflow,
   CheckCircle2,
   FileCode,
   Github
@@ -99,17 +98,6 @@ export default function LandingPage() {
                 >
                   <Trophy className="w-4 h-4" />
                   <span>Stability Dashboard</span>
-                </motion.button>
-              </Link>
-
-              <Link to="/flowchart">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="px-5 py-2.5 bg-blue-500/30 hover:bg-blue-500/40 text-white font-bold text-xs rounded-xl border border-white/20 backdrop-blur-sm transition-all flex items-center gap-2 cursor-pointer"
-                >
-                  <Workflow className="w-4 h-4" />
-                  <span>Deep Flowchart</span>
                 </motion.button>
               </Link>
             </div>

@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Zap, Trophy, Workflow, CheckCircle2 } from "lucide-react";
+import { Zap, Trophy, CheckCircle2 } from "lucide-react";
 
 interface HeroSectionProps {
   onOpenBenchmark?: () => void;
@@ -90,14 +90,14 @@ export function HeroSection({ onOpenBenchmark }: HeroSectionProps) {
           </motion.button>
         )}
 
-        <Link to="/flowchart">
+        <Link to="/release-readiness">
           <motion.button
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
-            className="btn-ghost flex items-center gap-2 bg-blue-50/60 border border-blue-200/60"
+            className="btn-secondary flex items-center gap-2"
           >
-            <Workflow className="w-4 h-4 text-blue-600" />
-            <span>Deep Flowchart</span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>Release Readiness</span>
           </motion.button>
         </Link>
       </motion.div>

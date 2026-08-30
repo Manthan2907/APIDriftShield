@@ -130,9 +130,20 @@ DriftShield was evaluated against **41 ground-truth test cases** derived from 8 
 * **High-Contrast Pure Light Theme Voice Narration**: Crystal-clear typography, step progress pill, and playback controls (`[0.5x, 1x, 2x, 3x]`).
 * **AI Voice Tour with Exhaustive Red Box Inspection**: Speech synthesis iterates through each breaking node cluster, speaks exact deleted endpoints/fields, and explains 5-minute mitigation plans.
 
-### 6. Executive Export Suite
+### 6. Release Readiness Scorecard *(New)*
+* **8-Factor Decision Engine**: Evaluates breaking change count, migration effort, documentation coverage, SDK readiness, deprecation windows, customer notification rates, response field coverage, and auth scheme changes.
+* **0–100 Go/No-Go Decision**: Outputs status rating (`GO — Ready to Release`, `Caution — Proceed with Plan`, `No-Go — Fix Blockers First`) with red blocker callouts, actionable recommendations, and a suggested launch timeline.
+* **Executive PDF Export**: Formatted for management and release team approval.
+
+### 7. Multi-Version API Stability Dashboard *(New)*
+* **Historical Version Tracking**: Upload up to 10 OpenAPI versions to track contract changes, safe additions, and endpoint growth over time.
+* **Interactive Trend Visualizations**: Interactive Recharts trend charts and visual release timeline with status badges (`STABLE`, `RISKY`, `MAJOR`).
+* **Competitive Benchmarking**: Directly compares breaking changes/year, release frequency, deprecation windows, and migration success rates against **Stripe, Shopify, and GitHub**.
+* **Predictive Insights**: Forecasts optimal release intervals and projected release dates for upcoming major versions.
+
+### 8. Executive Export Suite
 * **Rich GitHub PR Comment**: Formatted Markdown with native GitHub alerts (`> [!CAUTION]`), summary metrics tables, and breaking changes tables.
-* **Publication-Grade PDF**: Printable decision scorecard with custom print styling.
+* **Publication-Grade PDF**: Printable decision scorecards and stability reports with custom print styling.
 * **Plaintext Slack / Jira Export**: Formatted for direct pasting into team communication channels.
 * **JSON Export**: Complete structured evaluation payload for CI/CD webhook pipelines.
 
