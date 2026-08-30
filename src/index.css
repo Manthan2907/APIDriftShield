@@ -40,6 +40,80 @@
   }
 }
 
+/* Button & Card animations */
+@layer components {
+  .btn-primary {
+    @apply px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-xl
+           hover:bg-blue-700 active:scale-95 
+           transition-all duration-200 ease-out
+           shadow-sm hover:shadow-md cursor-pointer;
+  }
+  
+  .btn-secondary {
+    @apply px-6 py-2.5 bg-gray-100 text-gray-900 font-semibold rounded-xl 
+           border border-gray-300 hover:bg-gray-200 active:scale-95
+           transition-all duration-200 ease-out cursor-pointer;
+  }
+  
+  .btn-ghost {
+    @apply px-4 py-2 text-blue-600 font-medium rounded-xl 
+           hover:bg-blue-50 active:scale-95
+           transition-all duration-200 ease-out cursor-pointer;
+  }
+  
+  .card-light {
+    @apply bg-white border border-gray-200 rounded-2xl p-6
+           hover:border-blue-500 hover:shadow-lg 
+           transition-all duration-300 ease-out;
+  }
+  
+  .card-hover {
+    @apply cursor-pointer hover:scale-[1.02] hover:shadow-lg
+           transition-transform duration-300 ease-out;
+  }
+}
+
+/* Input animations */
+@layer components {
+  input, textarea {
+    @apply focus:border-blue-500 focus:ring-2 focus:ring-blue-200
+           transition-all duration-200 ease-out;
+  }
+}
+
+/* Badge animations */
+@layer components {
+  .badge-breaking {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 
+           bg-red-50 text-red-700 text-xs font-semibold 
+           border border-red-200 rounded-full
+           animate-pulse-subtle;
+  }
+  
+  .badge-safe {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 
+           bg-green-50 text-green-700 text-xs font-semibold 
+           border border-green-200 rounded-full;
+  }
+  
+  .badge-uncertain {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 
+           bg-amber-50 text-amber-700 text-xs font-semibold 
+           border border-amber-200 rounded-full;
+  }
+}
+
+/* Stagger animation delays */
+.delay-100 {
+  animation-delay: 100ms;
+}
+.delay-200 {
+  animation-delay: 200ms;
+}
+.delay-300 {
+  animation-delay: 300ms;
+}
+
 /* Custom crisp light scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -54,15 +128,6 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
-}
-
-/* Smooth slide animation */
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.animate-slide-down {
-  animation: slideDown 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Code fonts */
