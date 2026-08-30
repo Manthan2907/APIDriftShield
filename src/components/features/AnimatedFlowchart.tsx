@@ -29,7 +29,9 @@ import {
   XCircle,
   FileCode,
   Sparkles,
-  Smartphone
+  Smartphone,
+  Globe,
+  Cpu
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
