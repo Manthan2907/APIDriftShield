@@ -142,9 +142,9 @@ export const AiRemediationModal: React.FC<AiRemediationModalProps> = ({
         const data = await response.json();
         if (data.success && data.prompt) {
           setGeneratedPrompt(data.prompt);
-          setActiveModelName(data.model || (data.provider_used === "groq" ? "Groq Llama 3.3 70B" : "Gemini 1.5 Flash"));
+          setActiveModelName("DriftShield AI Engine");
           generateCompanionCode();
-          if (showToast) toast.success(`✨ Strategic AI Prompt Generated via ${data.provider_used.toUpperCase()}`);
+          if (showToast) toast.success(`✨ Strategic AI Prompt Generated`);
           return;
         }
       }
@@ -290,7 +290,7 @@ Update TypeScript interfaces / Python dataclasses / Pydantic models to align wit
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Powered by {activeModelName} — One-click directive for Cursor, Claude, or a 5-minute Gateway hotfix.
+                Powered by {provider === "groq" ? "Groq (Llama 3.3 70B)" : provider === "gemini" ? "Google Gemini 1.5 Flash" : "DriftShield Deterministic Synthesizer"} — One-click directive for Cursor, Claude, or a 5-minute Gateway hotfix.
               </p>
             </div>
           </div>
@@ -313,7 +313,7 @@ Update TypeScript interfaces / Python dataclasses / Pydantic models to align wit
               <button
                 onClick={() => setProvider("groq")}
                 className={cn(
-                  "px-3 py-1 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1",
+                  "px-3 py-1 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1.5",
                   provider === "groq"
                     ? "bg-indigo-600 text-white shadow-sm"
                     : "text-slate-600 hover:text-slate-900"
@@ -325,7 +325,7 @@ Update TypeScript interfaces / Python dataclasses / Pydantic models to align wit
               <button
                 onClick={() => setProvider("gemini")}
                 className={cn(
-                  "px-3 py-1 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1",
+                  "px-3 py-1 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1.5",
                   provider === "gemini"
                     ? "bg-indigo-600 text-white shadow-sm"
                     : "text-slate-600 hover:text-slate-900"
@@ -364,7 +364,7 @@ Update TypeScript interfaces / Python dataclasses / Pydantic models to align wit
                       type="password"
                       value={apiKey}
                       onChange={(e) => setApiKey(e.target.value)}
-                      placeholder={provider === "groq" ? "Enter GROQ_API_KEY" : "Enter GEMINI_API_KEY"}
+                      placeholder="Enter Custom API Key"
                       className="pl-7 pr-3 py-1.5 bg-white border border-indigo-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-mono shadow-sm w-44"
                     />
                   </div>

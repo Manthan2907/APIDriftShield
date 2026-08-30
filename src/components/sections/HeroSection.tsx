@@ -112,7 +112,7 @@ export function HeroSection({ onOpenBenchmark }: HeroSectionProps) {
           "✓ Executable Probes",
           "✓ 0.0% Hallucinations",
           "✓ Auto Migration Code",
-          "✓ Groq & Gemini AI Prompt",
+          "✓ Autonomous AI Directives",
         ].map((feature, i) => (
           <motion.span
             key={i}
