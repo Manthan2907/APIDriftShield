@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link, useLocation } from "react-router-dom";
-import { Zap, Workflow, History, BookOpen, Github, Menu, X, CheckCircle2, TrendingUp } from "lucide-react";
+import { Zap, History, BookOpen, Github, Menu, X, CheckCircle2, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import shieldLogo from "@/assets/shield-logo.png";
 import { cn } from "@/lib/utils";
@@ -13,7 +13,6 @@ export function Navbar() {
     { id: "analyzer", label: "API Analyzer", href: "/analyze", icon: Zap },
     { id: "release", label: "Release Readiness", href: "/release-readiness", icon: CheckCircle2 },
     { id: "stability", label: "Stability", href: "/stability", icon: TrendingUp },
-    { id: "flowchart", label: "Deep Flowchart", href: "/flowchart", icon: Workflow },
     { id: "history", label: "History", href: "/history", icon: History },
     { id: "docs", label: "Docs & RFC", href: "/docs", icon: BookOpen },
   ];
