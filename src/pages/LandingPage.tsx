@@ -73,10 +73,32 @@ export default function LandingPage() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-6 py-3 bg-white text-blue-700 font-bold text-xs rounded-xl hover:bg-blue-50 shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                  className="px-5 py-2.5 bg-white text-blue-700 font-bold text-xs rounded-xl hover:bg-blue-50 shadow-md transition-all flex items-center gap-2 cursor-pointer"
                 >
                   <Zap className="w-4 h-4 fill-current" />
                   <span>Launch API Analyzer</span>
+                </motion.button>
+              </Link>
+
+              <Link to="/release-readiness">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-5 py-2.5 bg-white/20 hover:bg-white/30 text-white font-bold text-xs rounded-xl border border-white/30 backdrop-blur-sm transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Release Readiness</span>
+                </motion.button>
+              </Link>
+
+              <Link to="/stability">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-5 py-2.5 bg-white/20 hover:bg-white/30 text-white font-bold text-xs rounded-xl border border-white/30 backdrop-blur-sm transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <Trophy className="w-4 h-4" />
+                  <span>Stability Dashboard</span>
                 </motion.button>
               </Link>
 
@@ -84,10 +106,10 @@ export default function LandingPage() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-6 py-3 bg-blue-500/30 hover:bg-blue-500/40 text-white font-bold text-xs rounded-xl border border-white/20 backdrop-blur-sm transition-all flex items-center gap-2 cursor-pointer"
+                  className="px-5 py-2.5 bg-blue-500/30 hover:bg-blue-500/40 text-white font-bold text-xs rounded-xl border border-white/20 backdrop-blur-sm transition-all flex items-center gap-2 cursor-pointer"
                 >
                   <Workflow className="w-4 h-4" />
-                  <span>Open Deep Flowchart</span>
+                  <span>Deep Flowchart</span>
                 </motion.button>
               </Link>
             </div>
