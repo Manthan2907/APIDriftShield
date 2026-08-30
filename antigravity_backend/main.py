@@ -726,7 +726,355 @@ Ensure all client constructors supply required fields or default fallbacks:
     }
 
 
-# ── Static SPA Frontend Mount (for Unified Single-Container Deployment) ───────
+# ── Liability Report Models ────────────────────────────────────────────────────
+
+class LiabilityBreakingChange(BaseModel):
+    type: str = Field("unknown", description="Change type (endpoint_removed, required_field_added, etc.)")
+    path: Optional[str] = Field("", description="API path affected")
+    method: Optional[str] = Field("GET")
+    affected_customers: Optional[int] = Field(0)
+    description: Optional[str] = Field("")
+
+class LiabilityRequest(BaseModel):
+    api_name: Optional[str] = Field("My API", description="Name of the API being analyzed")
+    v1_name: Optional[str] = Field("v1")
+    v2_name: Optional[str] = Field("v2")
+    # Breaking change summary (can come from a prior analysis)
+    breaking_changes: List[LiabilityBreakingChange] = Field(default_factory=list)
+    total_breaking_changes: Optional[int] = Field(0)
+    # Customer financials
+    total_customers: int = Field(500)
+    avg_customer_arr: float = Field(20000.0, description="Average customer ARR in USD")
+    historical_churn_rate: float = Field(0.025, description="Base churn rate 0.0-1.0")
+    avg_support_ticket_cost: float = Field(150.0)
+    expected_migration_time_hours: float = Field(4.0)
+    enterprise_customer_count: int = Field(0)
+    enterprise_avg_arr: float = Field(100000.0)
+    # Auth change severity
+    auth_change_severity: Optional[str] = Field("none", description="none|minor|moderate|major")
+
+
+def _compute_liability_local(payload: LiabilityRequest) -> Dict[str, Any]:
+    """Pure deterministic fallback — no AI needed."""
+    breaking = payload.total_breaking_changes or len(payload.breaking_changes)
+    affected = max(1, min(payload.total_customers, sum(
+        (c.affected_customers or int(payload.total_customers * 0.4)) for c in payload.breaking_changes
+    ) if payload.breaking_changes else int(payload.total_customers * 0.4 * breaking)))
+
+    # 1. Revenue at risk
+    arr_at_risk = affected * payload.avg_customer_arr
+    churn_multiplier = 1.0 + (0.5 if breaking > 5 else 0.25 if breaking > 2 else 0.0)
+    churn_rate = min(0.15, payload.historical_churn_rate * churn_multiplier)
+    revenue_at_risk = arr_at_risk * churn_rate * 3  # 3-year LTV loss
+
+    # 2. Enterprise risk
+    ent_churn_rate = min(0.20, churn_rate * 1.6)
+    enterprise_risk = payload.enterprise_customer_count * payload.enterprise_avg_arr * ent_churn_rate * 3
+
+    # 3. Support cost
+    tickets = affected * 2.5
+    direct_support = tickets * payload.avg_support_ticket_cost
+    indirect_support = (
+        50 * 250 +   # debugging hours
+        30 * 200 +   # CS escalations
+        20 * 300 +   # hotfixes
+        40 * 200 +   # migration guides
+        100 * 150    # productivity loss
+    )
+    support_cost = direct_support + indirect_support
+
+    # 4. Reputation risk
+    reputation_risk = affected * 0.15 * payload.total_customers * 0.10 * payload.avg_customer_arr
+
+    # 5. Opportunity cost
+    opportunity_cost = 40 * 200 + 30 * 200 + 100 * 150 + 50 * 180 + 5000
+
+    # Auth change modifier
+    auth_mod = {"none": 0, "minor": 0.05, "moderate": 0.15, "major": 0.35}.get(
+        (payload.auth_change_severity or "none").lower(), 0
+    )
+    auth_extra = (revenue_at_risk + enterprise_risk) * auth_mod
+
+    total = revenue_at_risk + enterprise_risk + support_cost + reputation_risk + opportunity_cost + auth_extra
+
+    # Status
+    if total < 100_000:
+        status = "green"
+    elif total < 500_000:
+        status = "yellow"
+    else:
+        status = "red"
+
+    # Mitigations
+    mitigations = [
+        {
+            "name": "Extended Deprecation Period (90 days)",
+            "description": "Keep v1 running alongside v2 for 90 days, giving customers sufficient migration time.",
+            "implementation_cost": 6000,
+            "savings": min(revenue_at_risk * 0.35, 150000),
+            "roi": round(min(revenue_at_risk * 0.35, 150000) / 6000, 1),
+            "time_hours": 10,
+            "priority": "high"
+        },
+        {
+            "name": "Auto-Generated Migration Guides",
+            "description": "Publish step-by-step migration documentation for every breaking change.",
+            "implementation_cost": 8000,
+            "savings": min(support_cost * 0.40, 60000),
+            "roi": round(min(support_cost * 0.40, 60000) / 8000, 1),
+            "time_hours": 40,
+            "priority": "high"
+        },
+        {
+            "name": "1-on-1 Enterprise Support Program",
+            "description": "Assign dedicated engineering time to hand-hold top enterprise customers through migration.",
+            "implementation_cost": 8000,
+            "savings": min(enterprise_risk * 0.55, 100000),
+            "roi": round(min(enterprise_risk * 0.55, 100000) / 8000, 1),
+            "time_hours": 40,
+            "priority": "high" if payload.enterprise_customer_count > 10 else "medium"
+        },
+        {
+            "name": "Customer Notification Campaign",
+            "description": "Proactively notify 100% of affected customers with timeline and support channels.",
+            "implementation_cost": 3000,
+            "savings": min(reputation_risk * 0.25, 80000),
+            "roi": round(min(reputation_risk * 0.25, 80000) / 3000, 1),
+            "time_hours": 15,
+            "priority": "high"
+        },
+        {
+            "name": "SDK Auto-Update + Compatibility Layer",
+            "description": "Ship updated SDKs for all languages and provide a thin compatibility shim for v1 clients.",
+            "implementation_cost": 16000,
+            "savings": min(support_cost * 0.55, 90000),
+            "roi": round(min(support_cost * 0.55, 90000) / 16000, 1),
+            "time_hours": 80,
+            "priority": "medium"
+        }
+    ]
+
+    total_mitigation_savings = sum(m["savings"] for m in mitigations[:3])
+    mitigated_total = max(0, total - total_mitigation_savings)
+
+    timeline = [
+        {"day": 0, "action": "Publish breaking change announcement and migration guide draft"},
+        {"day": 7, "action": "Release v2 beta to opt-in enterprise customers"},
+        {"day": 14, "action": "Ship updated SDKs for Python, JS, Go, Ruby"},
+        {"day": 30, "action": "Notify 100% of affected customers with migration support contacts"},
+        {"day": 60, "action": "v2 GA release — v1 enters maintenance mode (bug fixes only)"},
+        {"day": 90, "action": "v1 deprecation — new clients mandatory on v2"},
+        {"day": 120, "action": "v1 offline — redirect to v2 migration guide"},
+    ]
+
+    chart_data = [
+        {"name": "Revenue at Risk", "value": round(revenue_at_risk), "color": "#dc2626"},
+        {"name": "Enterprise Risk", "value": round(enterprise_risk), "color": "#b91c1c"},
+        {"name": "Support Cost", "value": round(support_cost), "color": "#f97316"},
+        {"name": "Reputation Risk", "value": round(reputation_risk), "color": "#be123c"},
+        {"name": "Opportunity Cost", "value": round(opportunity_cost), "color": "#ea580c"},
+    ]
+
+    risk_dimensions = [
+        {"axis": "Revenue Risk", "score": min(10, round(revenue_at_risk / max(total, 1) * 10 * 1.5))},
+        {"axis": "Support Burden", "score": min(10, round(support_cost / max(total, 1) * 10 * 3))},
+        {"axis": "Enterprise Risk", "score": min(10, round(enterprise_risk / max(total, 1) * 10 * 3))},
+        {"axis": "Churn Risk", "score": min(10, round(churn_rate / 0.15 * 10))},
+        {"axis": "Reputation Risk", "score": min(10, round(reputation_risk / max(total, 1) * 10 * 3))},
+        {"axis": "Auth Complexity", "score": {"none": 0, "minor": 2, "moderate": 5, "major": 9}.get(
+            (payload.auth_change_severity or "none").lower(), 0)},
+    ]
+
+    board_points = [
+        f"This release will expose an estimated ${total:,.0f} in financial liability across {affected} affected customers.",
+        f"Enterprise accounts (${payload.enterprise_customer_count} customers) represent the highest concentration risk at ${enterprise_risk:,.0f}.",
+        f"With the three highest-ROI mitigations implemented, liability drops to ${mitigated_total:,.0f} — a {round((1 - mitigated_total/max(total,1))*100)}% cost reduction.",
+        f"Extended 90-day deprecation window alone saves an estimated ${mitigations[0]['savings']:,.0f} at a cost of $6,000 (ROI: {mitigations[0]['roi']}x).",
+        f"Our breaking change count ({breaking}) compares favorably to Stripe (avg 4/yr), Shopify (2/yr), GitHub (1.5/yr).",
+    ]
+
+    return {
+        "status": status,
+        "total_liability": round(total),
+        "mitigated_liability": round(mitigated_total),
+        "breakdown": {
+            "revenue_at_risk": round(revenue_at_risk),
+            "enterprise_risk": round(enterprise_risk),
+            "support_cost": round(support_cost),
+            "reputation_risk": round(reputation_risk),
+            "opportunity_cost": round(opportunity_cost),
+            "auth_extra": round(auth_extra),
+        },
+        "scenarios": {
+            "best_case": round(total * 0.5),
+            "likely_case": round(total),
+            "worst_case": round(total * 1.8),
+        },
+        "mitigations": mitigations,
+        "timeline": timeline,
+        "chart_data": chart_data,
+        "risk_dimensions": risk_dimensions,
+        "board_talking_points": board_points,
+        "affected_customers": affected,
+        "churn_rate_used": round(churn_rate * 100, 2),
+    }
+
+
+@app.post("/api/liability-report", summary="Breaking Change Financial Liability Report")
+async def liability_report_endpoint(payload: LiabilityRequest):
+    """
+    Calculates the financial impact of breaking API changes.
+    Uses Groq (primary) → Gemini (fallback) → deterministic local math as final fallback.
+    Returns revenue at risk, support cost, reputation damage, mitigation strategies, and chart data.
+    """
+    import requests as http_requests
+
+    groq_key = os.environ.get("GROQ_API_KEY")
+    gemini_key = os.environ.get("GEMINI_API_KEY")
+
+    breaking_count = payload.total_breaking_changes or len(payload.breaking_changes)
+    changes_summary = json.dumps([
+        {"type": c.type, "path": c.path, "method": c.method, "affected_customers": c.affected_customers}
+        for c in payload.breaking_changes[:10]
+    ], indent=2)
+
+    financial_prompt = f"""You are a financial analyst for API platform decisions. Analyze breaking API changes and compute financial impact.
+
+API: {payload.api_name} ({payload.v1_name} → {payload.v2_name})
+Breaking Changes: {breaking_count}
+Changes Detail: {changes_summary or "No detailed breakdown provided"}
+
+Customer Profile:
+- Total customers: {payload.total_customers}
+- Avg customer ARR: ${payload.avg_customer_arr:,.0f}
+- Historical churn rate: {payload.historical_churn_rate * 100:.1f}%
+- Avg support ticket cost: ${payload.avg_support_ticket_cost:.0f}
+- Expected migration time: {payload.expected_migration_time_hours}h per customer
+- Enterprise customers: {payload.enterprise_customer_count}
+- Enterprise avg ARR: ${payload.enterprise_avg_arr:,.0f}
+- Auth change severity: {payload.auth_change_severity}
+
+Calculate EXACT dollar amounts for each category:
+1. Revenue at Risk = affected_customers × avg_arr × adjusted_churn_rate × 3yr LTV multiplier
+2. Enterprise Risk = enterprise_count × enterprise_arr × (churn_rate × 1.6) × 3
+3. Support Cost = (affected × 2.5 tickets × ticket_cost) + indirect costs (debugging, CS escalations, hotfixes, guides)
+4. Reputation Risk = (affected × 15% negative review rate × 10% signup impact × new_customers × avg_arr)
+5. Opportunity Cost = engineering + devrel + CS + sales + marketing time costs
+
+Return ONLY valid JSON (no markdown, no explanation):
+{{
+  "executive_summary": "2-sentence board-friendly summary",
+  "recommendation": "Release now|Delay|Mitigate first",
+  "revenue_at_risk": 0,
+  "enterprise_risk": 0,
+  "support_cost": 0,
+  "reputation_risk": 0,
+  "opportunity_cost": 0,
+  "total_liability": 0,
+  "mitigated_liability": 0,
+  "affected_customers": 0,
+  "churn_rate_used": 0.0,
+  "scenarios": {{"best_case": 0, "likely_case": 0, "worst_case": 0}},
+  "mitigations": [
+    {{"name": "", "description": "", "implementation_cost": 0, "savings": 0, "roi": 0.0, "time_hours": 0, "priority": "high"}}
+  ],
+  "risk_insights": ["insight 1", "insight 2", "insight 3"],
+  "board_talking_points": ["point 1", "point 2", "point 3"]
+}}"""
+
+    def _enrich_with_local(ai_data: Dict) -> Dict:
+        """Add chart_data, risk_dimensions, timeline that AI doesn't generate."""
+        local = _compute_liability_local(payload)
+        ai_data["chart_data"] = local["chart_data"]
+        ai_data["risk_dimensions"] = local["risk_dimensions"]
+        ai_data["timeline"] = local["timeline"]
+        ai_data["status"] = local["status"]
+        ai_data["breakdown"] = {
+            "revenue_at_risk": ai_data.get("revenue_at_risk", local["breakdown"]["revenue_at_risk"]),
+            "enterprise_risk": ai_data.get("enterprise_risk", local["breakdown"]["enterprise_risk"]),
+            "support_cost": ai_data.get("support_cost", local["breakdown"]["support_cost"]),
+            "reputation_risk": ai_data.get("reputation_risk", local["breakdown"]["reputation_risk"]),
+            "opportunity_cost": ai_data.get("opportunity_cost", local["breakdown"]["opportunity_cost"]),
+        }
+        # Rebuild chart_data from actual AI numbers
+        ai_data["chart_data"] = [
+            {"name": "Revenue at Risk", "value": ai_data.get("revenue_at_risk", 0), "color": "#dc2626"},
+            {"name": "Enterprise Risk", "value": ai_data.get("enterprise_risk", 0), "color": "#b91c1c"},
+            {"name": "Support Cost", "value": ai_data.get("support_cost", 0), "color": "#f97316"},
+            {"name": "Reputation Risk", "value": ai_data.get("reputation_risk", 0), "color": "#be123c"},
+            {"name": "Opportunity Cost", "value": ai_data.get("opportunity_cost", 0), "color": "#ea580c"},
+        ]
+        return ai_data
+
+    # 1. Try Groq
+    if groq_key:
+        try:
+            groq_res = http_requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
+                json={
+                    "model": "llama-3.3-70b-versatile",
+                    "messages": [
+                        {"role": "system", "content": "You are a senior financial analyst. Always respond with valid JSON only."},
+                        {"role": "user", "content": financial_prompt}
+                    ],
+                    "temperature": 0.1,
+                    "max_tokens": 2000
+                },
+                timeout=15
+            )
+            if groq_res.status_code == 200:
+                content = groq_res.json().get("choices", [{}])[0].get("message", {}).get("content", "")
+                # Strip markdown code fences if present
+                content = content.strip()
+                if content.startswith("```"):
+                    content = content.split("```")[1]
+                    if content.startswith("json"):
+                        content = content[4:]
+                ai_data = json.loads(content)
+                ai_data = _enrich_with_local(ai_data)
+                return {"success": True, "provider_used": "groq", **ai_data}
+        except Exception as e:
+            logger.warning(f"Groq liability call failed: {e}")
+
+    # 2. Try Gemini
+    if gemini_key:
+        try:
+            gemini_res = http_requests.post(
+                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}",
+                headers={"Content-Type": "application/json"},
+                json={"contents": [{"parts": [{"text": financial_prompt}]}]},
+                timeout=15
+            )
+            if gemini_res.status_code == 200:
+                content = gemini_res.json().get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+                content = content.strip()
+                if content.startswith("```"):
+                    content = content.split("```")[1]
+                    if content.startswith("json"):
+                        content = content[4:]
+                ai_data = json.loads(content)
+                ai_data = _enrich_with_local(ai_data)
+                return {"success": True, "provider_used": "gemini", **ai_data}
+        except Exception as e:
+            logger.warning(f"Gemini liability call failed: {e}")
+
+    # 3. Full local deterministic fallback
+    local_result = _compute_liability_local(payload)
+    return {
+        "success": True,
+        "provider_used": "local_deterministic",
+        "executive_summary": f"Analysis of {breaking_count} breaking changes across {payload.total_customers} customers. Total estimated financial exposure is ${local_result['total_liability']:,.0f}.",
+        "recommendation": "Release now" if local_result["status"] == "green" else ("Mitigate first" if local_result["status"] == "yellow" else "Delay"),
+        "risk_insights": [
+            f"Your breaking change count ({breaking_count}) should be benchmarked against Stripe (4/yr), Shopify (2/yr), GitHub (1.5/yr).",
+            f"Extended deprecation to 90 days reduces churn risk by approximately 35%.",
+            f"Enterprise customers represent disproportionate revenue concentration risk.",
+        ],
+        **local_result
+    }
+
+
 
 dist_candidates = [
     os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "dist")),
