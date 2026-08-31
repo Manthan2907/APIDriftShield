@@ -141,9 +141,18 @@ DriftShield was evaluated against **41 ground-truth test cases** derived from 8 
 * **Competitive Benchmarking**: Directly compares breaking changes/year, release frequency, deprecation windows, and migration success rates against **Stripe, Shopify, and GitHub**.
 * **Predictive Insights**: Forecasts optimal release intervals and projected release dates for upcoming major versions.
 
-### 8. Executive Export Suite
+### 8. Breaking Change Financial Liability Report *(New Winning Feature)*
+* **Financial Impact Quantification**: Translates technical breaking changes into executive-level dollars at risk: **Revenue at Risk (3-Year LTV)**, **Enterprise Account Exposure**, **Support Ticket Overhead**, **Reputation Damage (Review/Signup Churn)**, and **Engineering Opportunity Cost**.
+* **3-Tier Multi-Model Fallback Chain**: Powered by **Groq (`openai/gpt-oss-120b`, `qwen/qwen3.8-27b`)** $\rightarrow$ **Google Gemini (`gemini-3-flash-preview`, `gemini-2.5-flash`)** $\rightarrow$ **Deterministic Local Math** for 100% reliable calculations.
+* **ROI-Ranked Mitigation Playbook**: Automatically generates actionable cost-saving strategies (e.g. *90-Day Extended Deprecation*, *Auto-Generated Migration Guides*, *1-on-1 Enterprise White-Glove Support*) with calculated dollar savings and ROI multiples (e.g., 16.6x ROI).
+* **Multi-Scenario Modeling**: Generates Best Case, Likely Case, and Worst Case financial models.
+* **Interactive Visual Analytics**: Interactive Recharts PieChart (liability composition), BarChart (mitigation ROI), and RadarChart (6-axis risk dimensions).
+* **1-Click Auto-Fill & Industry Presets**: Automatically pulls from your latest spec analysis run, or choose from *SaaS Scale ($20k ARR)*, *Enterprise FinTech ($100k ARR)*, or *Public Dev Platform ($5k ARR)*.
+* **Board-Ready PDF Report**: One-click export formatted with Georgia serif typography and clean tabular structures ready for executive and board presentations.
+
+### 9. Executive Export Suite
 * **Rich GitHub PR Comment**: Formatted Markdown with native GitHub alerts (`> [!CAUTION]`), summary metrics tables, and breaking changes tables.
-* **Publication-Grade PDF**: Printable decision scorecards and stability reports with custom print styling.
+* **Publication-Grade PDF**: Printable decision scorecards, stability reports, and liability analyses with custom print styling.
 * **Plaintext Slack / Jira Export**: Formatted for direct pasting into team communication channels.
 * **JSON Export**: Complete structured evaluation payload for CI/CD webhook pipelines.
 

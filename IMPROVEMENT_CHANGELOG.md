@@ -34,11 +34,16 @@
 * Upgraded GitHub PR comment exporter to output native GitHub alert callouts (`> [!CAUTION]`) and markdown scorecard tables.
 * Expanded test suite to **20 automated pytest tests** (100% pass rate).
 
-## Milestone 8: AI Strategic Remediation Suite & Unified Railway Deployment *(Latest)*
-* **Integrated Groq Llama 3.3 70B & Google Gemini 1.5 Flash**: Added server-side `/api/ai-remediation` and `/api/ai-status` endpoints that execute prompt synthesis in < 500ms via `GROQ_API_KEY` in `.env` / Railway.
-* **One-Click Cursor / Claude Code / Copilot Prompt Generator**: Resolves the "160-hour migration trap" (671 breaking changes) by synthesizing massive contract diffs into a single actionable refactoring prompt for AI coding assistants.
+## Milestone 8: AI Strategic Remediation Suite & Unified Railway Deployment
+* **Integrated Groq & Google Gemini APIs**: Added server-side `/api/ai-remediation` and `/api/ai-status` endpoints that execute prompt synthesis via `GROQ_API_KEY` / `GEMINI_API_KEY`.
+* **One-Click Cursor / Claude Code / Copilot Prompt Generator**: Resolves the "160-hour migration trap" by synthesizing massive contract diffs into a single actionable refactoring prompt for AI coding assistants.
 * **5-Minute Zero-Downtime Gateway Hotfix**: Auto-generates Cloudflare Worker / Express / Envoy proxy middleware to transparently rewrite deprecated routes.
 * **Client SDK Interceptor Patch**: Auto-generates 15-line Axios / Fetch middleware adapters.
-* **High-Scale Root Cause Clustering & Pagination**: Grouped mutations into pattern clusters (`Removed Routes`, `Required Fields`, `Type Narrowing`) with 8-item pagination to keep UI snappy.
+* **High-Scale Root Cause Clustering & Pagination**: Grouped mutations into pattern clusters with 8-item pagination to keep UI snappy.
 * **Single-Container Multi-Stage Dockerfile on Railway**: Unified Node.js 20 frontend builder and Python 3.11 FastAPI backend in one container deployed at `https://apidriftshield.up.railway.app`.
-* **Pure High-Contrast Light Theme Voice Narration**: Converted floating voice captions to crystal-clear typography with step navigation and dismissal controls.
+
+## Milestone 9: Release Readiness, Stability Modeling & Financial Liability Engine *(Current)*
+* **Release Readiness Scorecard (`/release-readiness`)**: Built an 8-factor Go/No-Go decision engine (0–100 score) evaluating breaking changes, migration effort, docs coverage, SDK readiness, deprecation windows, customer notifications, response fields, and auth changes. Includes interactive blockers and release timeline.
+* **API Stability Dashboard (`/stability`)**: Multi-version AST tracking across up to 10 versions. Built interactive Recharts trend graphs, release status badges, and competitive benchmark tables comparing metrics against **Stripe, Shopify, and GitHub**.
+* **Breaking Change Financial Liability Report (`/liability`)**: Quantifies contract breakage in executive dollar terms across Revenue at Risk, Enterprise Risk, Support Cost, Reputation Damage, and Opportunity Cost. Powered by a 3-tier Groq $\rightarrow$ Gemini $\rightarrow$ Local Math fallback chain with ROI-ranked mitigation strategies, multi-scenario modeling, and publication-grade PDF generation.
+* **Integrated Workspace Navigation**: Seamless history loading and 1-click industry presets across Analyzer, Readiness, and Liability workflows.

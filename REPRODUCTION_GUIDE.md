@@ -124,7 +124,28 @@ npm run dev
    - Click **"Scan Repository for Specs"**.
    - Click **"Run Full DriftShield Analysis"** to analyze discovered specs directly from the GitHub tree.
 
-3. **Interactive Deep Architecture Graph & AI Voice Tour**:
+3. **Release Readiness Scorecard**:
+   - Navigate to **`/release-readiness`**.
+   - Click **"Auto-Fill from Run History"** or **"Load Sample Data"**.
+   - Click **"Compute Release Readiness Score"**.
+   - Review the 8-factor scoring evaluation, red blocker callouts, and suggested Day 0 to Day 90 release timeline.
+   - Click **"Export PDF Report"** to generate a printable executive scorecard.
+
+4. **API Stability Dashboard**:
+   - Navigate to **`/stability`**.
+   - Click **"Load Sample 5-Version History"** (or upload multiple version specs).
+   - Click **"Analyze Stability & Benchmarks"**.
+   - Review version-over-version trend graphs (breaking changes vs safe additions), release status badges, and competitive benchmark tables comparing metrics directly against **Stripe, Shopify, and GitHub**.
+
+5. **Breaking Change Financial Liability Report**:
+   - Navigate to **`/liability`**.
+   - Under *1-Click Presets*, select **"SaaS Scale ($20k ARR)"** or click **"Auto-Fill from Run"**.
+   - Click **"Calculate Financial Liability"**.
+   - Review the total liability calculation ($ at risk, support overhead, reputation impact, opportunity cost), Recharts pie/bar/radar visualizations, ROI-ranked mitigation strategies, and board presentation talking points.
+   - Click **"Export Board PDF"** for an executive-formatted report.
+
+6. **Interactive Deep Architecture Graph & AI Voice Tour**:
    - Navigate to **`/flowchart`** (or click **"Launch Interactive Flowchart"** from results).
    - Select speed `[1x, 2x, 3x]` and click **"Play AI Voice Narration"**.
    - The voice agent walks through every node, opens the route inspector drawer, and narrates the exact 5-minute fix in high-contrast light mode.
+
