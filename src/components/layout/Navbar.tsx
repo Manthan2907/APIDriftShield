@@ -88,17 +88,6 @@ export function Navbar() {
             <Github className="w-3.5 h-3.5 text-gray-700" />
             <span>GitHub</span>
           </a>
-
-          <Link to="/analyze">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-4 py-2 bg-blue-600 text-white font-bold text-xs rounded-xl hover:bg-blue-700 shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-1.5 cursor-pointer"
-            >
-              <Zap className="w-3.5 h-3.5 fill-current" />
-              <span>Analyze API</span>
-            </motion.button>
-          </Link>
         </div>
 
         {/* Mobile Toggle */}
